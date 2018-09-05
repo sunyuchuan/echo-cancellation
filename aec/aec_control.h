@@ -1,0 +1,164 @@
+#ifndef _AEC_CONTROL_H_
+#define _AEC_CONTROL_H_
+
+#include "aec/post_process/post_process_config.h"
+#include "subband/analy_synth/filterbank_control.h"
+#include "utility/fft/fft_config.h"
+#include "utility/ringbuffer/ring_buffer.h"
+
+namespace xmly_audio_recorder_android {
+class AecControl {
+   public:
+    int far_buf_write_pos;
+    int far_buf_read_pos;
+    int known_delay;
+    int last_known_delay;
+
+    short *far_frame_buf;
+    short *near_frame_buf;
+
+    RingBuffer *far_end_buf;
+    short *last_far_end_frame;
+
+    void *delay_estimator_farend;
+    void *delay_estimator;
+    unsigned short current_delay;
+    float *far_history;
+    float *far_sepctrum_history;
+    int far_history_pos;
+
+    FFT_Config *realFFT;
+    FilterBankControl *fb_ctrl_far;
+    FilterBankControl *fb_ctrl_near;
+
+    float *near_input_buf;
+    float *far_input_buf;
+
+    float *adp_filter_coeff;
+    float *far_fb_buf;
+    float *near_fb_buf;
+    float *echo_buf;
+    float *error_buf;
+    float *post_res_frame;
+#if AEC_POST_PROCESSING_ON
+    FFT_Config *post_fft_conf;
+    float *coh_res;
+    float *coh_echo;
+    float *coh_rd;
+    float *adpt_coh_echo;
+    float *prev_enchanced_sqrd;
+    float *enhanced;
+    short first_frame;
+    float *post_echo_frame;
+    float *vlp_buf;
+#endif
+
+    float *Rss;
+    float *Rdd;
+    float *Ree;
+
+    AecControl();
+    /**************************************************************************
+     *Function  -   allocate space for aec instance
+     *
+     *Input		-	None
+     *Output	-	None
+     *
+     *Return	-	-1 - fail
+     *				0  - succeed
+     **************************************************************************/
+    int AudioProcessing_AEC_Create();
+
+    /**************************************************************************
+     *Function  -   initialize aec instance data members
+     *
+     *Input		-	None
+     *Output	-	None
+     *
+     *Return	-	-1 - fail
+     *				0  - succeed
+     **************************************************************************/
+    int AudioProcessing_AEC_Init();
+
+    /**************************************************************************
+     *Function  -   fill aec far-end buffer
+     *
+     *Input		-	ref - far-end data addr
+     *				sample_size - far-end data length in byte
+     *				playout_switch - audio playout switch
+     *				mic_switch - recorder microphone switch
+     *Output	-	None
+     *
+     *Return	-	-1 - fail
+     *				0  - succeed
+     **************************************************************************/
+    int AudioProcessing_AEC_FillFarBuf(char *ref, short sample_size,
+                                       bool playout_switch, bool mic_switch);
+
+    /**************************************************************************
+     *Function  -   adaptive filter process
+     *
+     *Input		-	pri - near-end data addr
+     *				sample_size - near-end data length in byte
+     *				out_buf - output data addr
+     *				output_size - output data size addr in byte
+     *				out_buf1 - estimated echo data addr
+     *				output_size1 - estimated echo data size addr in
+     *byte playout_switch - audio playout switch mic_switch - microphone capture
+     *switch Output	-	None
+     *
+     *Return	-	-1 - fail
+     *				0  - succeed
+     **************************************************************************/
+    int AudioProcessing_AEC_Process(char *pri, short sample_size, char *out_buf,
+                                    unsigned int *output_size, char *out_buf1,
+                                    unsigned int *output_size1,
+                                    bool playout_switch, bool mic_switch);
+
+    /**************************************************************************
+     *Function  -   reset far frame buffer variables
+     *
+     *Input		-	None
+     *Output	-	None
+     *
+     *Return	-	-1 - fail
+     *				0  - succeed
+     **************************************************************************/
+    int AudioProcessing_AEC_ClearFarFrameBuf();
+
+    /**************************************************************************
+     *Function  -   reset near end filter bank state
+     *
+     *Input		-	None
+     *Output	-	None
+     *
+     *Return	-	-1 - fail
+     *				0  - succeed
+     **************************************************************************/
+    int AudioProcessing_AEC_ResetNearState();
+
+    /**************************************************************************
+     *Function  -   reset far end buffer and filter bank state
+     *
+     *Input		-	None
+     *Output	-	None
+     *
+     *Return	-	-1 - fail
+     *				0  - succeed
+     **************************************************************************/
+    int AudioProcessing_AEC_ResetFarState();
+
+    /**************************************************************************
+     *Function  -   release aec instance
+     *
+     *Input		-	None
+     *Output	-	None
+     *
+     *Return	-	-1 - fail
+     *				0  - succeed
+     **************************************************************************/
+    int AudioProcessing_AEC_Release();
+};
+}  // namespace xmly_audio_recorder_android
+
+#endif

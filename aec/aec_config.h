@@ -1,0 +1,6 @@
+#ifndef _AEC_CONFIGURATION_H_
+#define _AEC_CONFIGURATION_H_
+
+//#define SUBBAND_AEC_PROTOTYPE_FILTER_2048
+
+#endif
