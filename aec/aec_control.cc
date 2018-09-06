@@ -3,6 +3,10 @@ extern "C" {
 #endif
 
 #include "aec/aec_control.h"
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "aec/aec_core.h"
 #include "aec/aec_defines.h"
 #include "aec/delay_estimator/delay_estimator_internal.h"
@@ -12,10 +16,6 @@ extern "C" {
 #include "utility/fft/fft_wrapper.h"
 #include "utility/fft/rdft_8g_init.h"
 #include "utility/log/log.h"
-
-#include <math.h>
-#include <stdlib.h>
-#include <string.h>
 
 #define IFFT_GAIN (32767.0f * 2.0f / 1024.0f)
 
@@ -64,10 +64,6 @@ AecControl::AecControl()
 }
 
 int AecControl::AudioProcessing_AEC_Create() {
-    if (this == NULL) {
-        return -1;
-    }
-
     far_frame_buf = (short *)malloc((FRAME_LEN + PART_LEN) * sizeof(short));
     if (far_frame_buf == NULL) {
         this->AudioProcessing_AEC_Release();
@@ -268,10 +264,6 @@ int AecControl::AudioProcessing_AEC_Create() {
 }
 
 int AecControl::AudioProcessing_AEC_Init() {
-    if (this == NULL) {
-        return -1;
-    }
-
     far_buf_write_pos = 0;
     far_buf_read_pos = 0;
     known_delay = 0;
@@ -326,7 +318,7 @@ int AecControl::AudioProcessing_AEC_Init() {
 int AecControl::AudioProcessing_AEC_FillFarBuf(char *ref, short sample_size,
                                                bool playout_switch,
                                                bool mic_switch) {
-    if (this == NULL || ref == NULL || sample_size < 0) {
+    if (ref == NULL || sample_size < 0) {
         // LOGI("input arguments error.\n");
         return -1;
     }
@@ -338,11 +330,6 @@ int AecControl::AudioProcessing_AEC_FillFarBuf(char *ref, short sample_size,
 
     if (playout_switch == true) {
         RingBuffer_WriteBuffer(far_end_buf, ref, (size_t)(sample_size >> 1));
-        /*if(far_end_buf->rw_wrap==DIFF_WRAP)
-        {fetch insufficiently fast, write_pointer exceeds read_pointer
-                LOGI("far end buffer wrapped.\n");
-                return -1;
-        }*/
     }
 
     if (playout_switch == true && mic_switch == false) {
@@ -380,8 +367,8 @@ int AecControl::AudioProcessing_AEC_FillFarBuf(char *ref, short sample_size,
             }
         }
     }
-    // LOGI("far_end_buf->read_pos is %d, far_end_buf->write_pos is
-    // %d.\n",far_end_buf->read_pos,far_end_buf->write_pos);
+    // LOGI("far_end_buf->read_pos = %lu, far_end_buf->write_pos = %lu.\n",
+    //      far_end_buf->read_pos, far_end_buf->write_pos);
 
     return 0;
 }
@@ -406,7 +393,7 @@ int AecControl::AudioProcessing_AEC_Process(
     short nFrames = (sample_size >> 1) / SUBBAND_FRAME_SHIFT, output_sample_num,
           output_sample_num1, seg_len = 0, data_len_record1 = POST_FFT_LEN / 2,
           data_len_record2 = POST_FFT_LEN / 2, *out = (short *)out_buf,
-          *out1 = (short *)out_buf1, *near = (short *)pri;
+          *near = (short *)pri;
     float *far_spectrum, tmpno1, tmpno2, tmpno3, tmpno4;
     int delay;
 
@@ -475,7 +462,7 @@ int AecControl::AudioProcessing_AEC_Process(
             } else if (delay == -1) {
                 return -1;
             }
-            // LOGI("Estimated delay is %d\n",delay);
+            LOGI("Estimated delay is %d\n", delay);
 
             far_spectrum =
                 AlignedFarend(far_history_pos, far_sepctrum_history, delay);
@@ -557,20 +544,12 @@ int AecControl::AudioProcessing_AEC_Process(
 }
 
 int AecControl::AudioProcessing_AEC_ClearFarFrameBuf() {
-    if (this == NULL) {
-        return -1;
-    }
-
     memset(far_fb_buf, 0, sizeof(float) * (ADPF_LEN * OVERSAMPLE_RATE) * 2);
 
     return 0;
 }
 
 int AecControl::AudioProcessing_AEC_ResetNearState() {
-    if (this == NULL) {
-        return -1;
-    }
-
     DftFilterBankReset(fb_ctrl_near);
 #if AEC_POST_PROCESSING_ON
     memset(post_echo_frame, 0, sizeof(float) * (POST_FFT_LEN));
@@ -584,9 +563,6 @@ int AecControl::AudioProcessing_AEC_ResetNearState() {
 }
 
 int AecControl::AudioProcessing_AEC_ResetFarState() {
-    if (this == NULL) {
-        return -1;
-    }
     short i;
     DelayEstimatorFarend *delay_far =
         (DelayEstimatorFarend *)delay_estimator_farend;
@@ -627,10 +603,6 @@ int AecControl::AudioProcessing_AEC_ResetFarState() {
 }
 
 int AecControl::AudioProcessing_AEC_Release() {
-    if (this == NULL) {
-        return -1;
-    }
-
     if (far_frame_buf != NULL) {
         free(far_frame_buf);
     }

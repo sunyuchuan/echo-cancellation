@@ -4,10 +4,15 @@ extern "C" {
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "aec/aec_control.h"
 #include "aec/aec_defines.h"
 #include "aec/delay_estimator/delay_estimator.h"
 #include "subband/analy_synth/filterbank.h"
+
+#ifdef __cplusplus
+}
+#endif
 
 using namespace xmly_audio_recorder_android;
 int main() {
@@ -15,20 +20,18 @@ int main() {
     FILE *fid_ref, *fid_pri, *fid_out, *fid_echo;
     char *ref, *pri, out[4096], out1[4096];
     short block_size = 4096;
-    float *ref_float, *pri_float;
     unsigned int size, size1, count = 0;
     bool mic, playout;
-    short reset_far_state = 0, reset_near_state = 0;
 
-    fid_ref = fopen("ref11.pcm", "rb+");
-    fid_pri = fopen("pri11.pcm", "rb+");
-    fid_out = fopen("out.pcm", "wb+");
-    fid_echo = fopen("echo.pcm", "wb+");
+    fid_ref = fopen("/home/layne/audio/record/test_aec/play.pcm", "rb");
+    fid_pri = fopen("/home/layne/audio/record/test_aec/sdl.pcm", "rb");
+    fid_out = fopen("out.pcm", "wb");
+    fid_echo = fopen("echo.pcm", "wb");
 
     ref = (char *)malloc(block_size);
     pri = (char *)malloc(block_size);
-    ref_float = (float *)malloc(sizeof(float) * block_size * 2);
-    pri_float = (float *)malloc(sizeof(float) * block_size * 2);
+    memset(ref, 0, block_size);
+    memset(pri, 0, block_size);
 
     if (aec_inst == NULL) {
         return -1;
@@ -49,12 +52,7 @@ int main() {
     while (fread(ref, sizeof(char), block_size, fid_ref) == block_size &&
            fread(pri, sizeof(char), block_size, fid_pri) == block_size) {
         count++;
-        if (count == 72) {
-            count = 72;
-        }
-
-        aec_inst->AudioProcessing_AEC_FillFarBuf(ref, block_size, playout,
-                                                 true);
+        aec_inst->AudioProcessing_AEC_FillFarBuf(ref, block_size, playout, mic);
         aec_inst->AudioProcessing_AEC_Process(pri, block_size, out, &size, out1,
                                               &size1, playout, mic);
         fwrite(out, sizeof(char), size, fid_out);
@@ -67,6 +65,14 @@ int main() {
     fclose(fid_pri);
     fclose(fid_out);
     fclose(fid_echo);
+    if (ref) {
+        free(ref);
+        ref = NULL;
+    }
+    if (pri) {
+        free(pri);
+        pri = NULL;
+    }
 
     if (CloseDelayRecordFile() < 0) {
         return -1;
@@ -74,7 +80,3 @@ int main() {
 
     return 0;
 }
-
-#ifdef __cplusplus
-}
-#endif
