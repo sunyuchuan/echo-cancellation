@@ -13,8 +13,11 @@
 // enum { kBandFirst = 12 };
 // enum { kBandLast = 43 };
 
-enum { kBandFirst = 7 };  // for 44k
-enum { kBandLast = 38 };
+// enum { kBandFirst = 7 };  // for 44k
+// enum { kBandLast = 38 };
+
+enum { kBandFirst = 96 };  // for 44k
+enum { kBandLast = 127 };
 
 float ar_factor1 = 0.0625f;
 
