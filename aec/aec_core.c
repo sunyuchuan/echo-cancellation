@@ -18,6 +18,8 @@
 #define LAMDA (0.6f)
 #define GAMMA (0.95f)
 
+#define LOW_FREQUENCY_LEN 880
+
 void CalcAbsValue(FilterBankControl *fb_inst, float *inv_abs_val,
                   float *abs_val) {
     short j, k;
@@ -215,6 +217,9 @@ int AecResidualEchoCancellation(float *input_res, float *input_echo,
          fft_conf->ip, fft_conf->w);
     rdft(POST_FFT_LEN, &(fft_conf->nc), &(fft_conf->nw), 1, echo_fft_buf,
          fft_conf->ip, fft_conf->w);
+
+    memset(&res_fft_buf[LOW_FREQUENCY_LEN], 0,
+           sizeof(float) * (POST_FFT_LEN - LOW_FREQUENCY_LEN));
 
     if (*first_frame == 1) {
         for (j = 2, k = 2; j < POST_FFT_LEN; j += 2, k++) {
