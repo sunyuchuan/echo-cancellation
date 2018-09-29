@@ -1,10 +1,19 @@
 cmake_minimum_required(VERSION 2.8)
 
-SET(CMAKE_BUILD_TYPE "Debug")  
-SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g2 -ggdb")  
-SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
-
 project(echo_cancellation)
+set(CMAKE_BUILD_TYPE "Debug")
+set(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} ${CMAKE_CXX_FLAGS} -O0 -g2 -ggdb -Wall \
+-Wno-deprecated-declarations \
+-Wno-disabled-macro-expansion -Wno-float-equal -Wno-c++98-compat -Wno-c++98-compat-pedantic \
+-Wno-global-constructors -Wno-exit-time-destructors \
+-Wno-missing-prototypes -Wno-padded -Wno-old-style-cast")
+set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} ${CMAKE_CXX_FLAGS} -O3 -Wall")
+add_definitions(-D __STDC_CONSTANT_MACROS)
+set(CMAKE_CXX_COMPILER "clang++")
+set(CMAKE_C_EXTENSIONS      ON)
+set(CMAKE_C_STANDARD        99)
+set(CMAKE_CXX_EXTENSIONS    ON)
+set(CMAKE_CXX_STANDARD      11)
 
 include_directories(${PROJECT_SOURCE_DIR})
 
@@ -24,4 +33,4 @@ utility/fft/rdft_8g_make_table.c
 utility/fft/rdft_8g.c 
 utility/ringbuffer/ring_buffer.c 
 app/test1.cc)
-target_link_libraries(${PROJECT_NAME})
+target_link_libraries(${PROJECT_NAME} pthread)

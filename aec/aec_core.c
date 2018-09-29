@@ -67,22 +67,14 @@ float *AlignedFarend(int pos, float *spec_hist, int delay) {
     return &(spec_hist[buffer_position * SUBBAND_NUM]);
 }
 
-void SetNonlinearGain(float curr_level, float *gain, float min_level)
-{
-    if(percertage<=min_level)
-    {
+void SetNonlinearGain(float curr_level, float *gain, float min_level) {
+    if (curr_level <= min_level) {
         *gain = 1.0f;
-    }
-    else if(percertage<(min_level+0.1f))
-    {
+    } else if (curr_level < (min_level + 0.1f)) {
         *gain = 0.9f;
-    }
-    else if(percertage<(min_level+0.2f))
-    {
+    } else if (curr_level < (min_level + 0.2f)) {
         *gain = 0.8f;
-    }
-    else if(percertage<(min_level+0.3f))
-    {
+    } else if (curr_level < (min_level + 0.3f)) {
         *gain = 0.7f;
     }
 }

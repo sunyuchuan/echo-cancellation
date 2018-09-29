@@ -34,7 +34,6 @@ class AecControl {
     float *near_input_buf;
     float *far_input_buf;
 
-    float *adp_filter_coeff;
     float *far_fb_buf;
     float *near_fb_buf;
     float *echo_buf;
@@ -79,7 +78,7 @@ class AecControl {
      *Return	-	-1 - fail
      *				0  - succeed
      **************************************************************************/
-    int AudioProcessing_AEC_Init();
+    int AudioProcessing_AEC_Init(float amp_perc, float min_perc);
 
     /**************************************************************************
      *Function  -   fill aec far-end buffer
@@ -100,19 +99,17 @@ class AecControl {
      *Function  -   adaptive filter process
      *
      *Input		-	pri - near-end data addr
-     *				sample_size - near-end data length in byte
-     *				out_buf - output data addr
-     *				output_size - output data size addr in byte
-     *				out_buf1 - estimated echo data addr
-     *				output_size1 - estimated echo data size addr in
-     *				playout_switch - if playout thread is working
-     *				mic_switch - if microphone is capturing
-     *				amp_pwr_changed - if the amplifier power is manually
-     *							changed
-     *				amp_level - current amplifier power level
-     *				min_level - from what level to add nonlinearity
-     *byte playout_switch - audio playout switch mic_switch - microphone capture
-     *switch Output	-	None
+     *			sample_size - near-end data length in byte
+     *			out_buf - output data addr
+     *			output_size - output data size addr in byte
+     *			out_buf1 - estimated echo data addr
+     *			output_size1 - estimated echo data size addr in
+     *			playout_switch - if playout thread is working
+     *			mic_switch - if microphone is capturing
+     *			amp_pwr_changed - if the amplifier power is
+     *manually changed amp_level - current amplifier power level min_level -
+     *from what level to add nonlinearity byte playout_switch - audio playout
+     *switch mic_switch - microphone capture switch Output	-	None
      *
      *Return	-	-1 - fail
      *				0  - succeed
@@ -121,8 +118,8 @@ class AecControl {
                                     unsigned int *output_size, char *out_buf1,
                                     unsigned int *output_size1,
                                     bool playout_switch, bool mic_switch,
-				    bool amp_pwr_changed, float amp_level, 
-				    float min_level);
+                                    bool amp_pwr_changed, float amp_level,
+                                    float min_level);
 
     /**************************************************************************
      *Function  -   reset far frame buffer variables

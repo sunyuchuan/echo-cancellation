@@ -18,20 +18,18 @@ using namespace xmly_audio_recorder_android;
 int main() {
     AecControl *aec_inst = new AecControl;
     FILE *fid_ref, *fid_pri, *fid_out, *fid_echo;
-    char *ref, *pri, out[4096], out1[4096];
+    char *ref, *pri, out[4096] = {0}, out1[4096] = {0};
     short block_size = 4096;
     unsigned int size, size1, count = 0;
     bool mic, playout;
 
-    fid_ref = fopen("/home/layne/audio/record/test_aec/play.pcm", "rb");
-    fid_pri = fopen("/home/layne/audio/record/test_aec/sdl.pcm", "rb");
+    fid_ref = fopen("/home/layne/audio/record/note/play.pcm", "rb");
+    fid_pri = fopen("/home/layne/audio/record/note/sdl.pcm", "rb");
     fid_out = fopen("out.pcm", "wb");
     fid_echo = fopen("echo.pcm", "wb");
 
-    ref = (char *)malloc(block_size);
-    pri = (char *)malloc(block_size);
-    memset(ref, 0, block_size);
-    memset(pri, 0, block_size);
+    ref = (char *)calloc(block_size, sizeof(char));
+    pri = (char *)calloc(block_size, sizeof(char));
 
     if (aec_inst == NULL) {
         return -1;
@@ -40,7 +38,7 @@ int main() {
     if (aec_inst->AudioProcessing_AEC_Create() < 0) {
         return -1;
     }
-    if (aec_inst->AudioProcessing_AEC_Init() < 0) {
+    if (aec_inst->AudioProcessing_AEC_Init(0.8, 0.6) < 0) {
         return -1;
     }
     if (OpenDelayRecordFile() < 0) {
@@ -54,7 +52,8 @@ int main() {
         count++;
         aec_inst->AudioProcessing_AEC_FillFarBuf(ref, block_size, playout, mic);
         aec_inst->AudioProcessing_AEC_Process(pri, block_size, out, &size, out1,
-                                              &size1, playout, mic);
+                                              &size1, playout, mic, true, 0.8,
+                                              0.6);
         fwrite(out, sizeof(char), size, fid_out);
         fwrite(out1, sizeof(char), size1, fid_echo);
     }
