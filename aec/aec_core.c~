@@ -390,8 +390,8 @@ int AecResidualEchoCancellation(float *input_res, float *input_echo,
             tmpno6 = _reciprocal_sqrt(tmpno3 + tmpno4 + 1e-12f);
             tmpno1 = tmpno5 * tmpno3;
             gain = tmpno1 * tmpno6;
-            enhanced[j] = res_fft_buf[j] * gain * nonlinear_gain;
-            enhanced[j + 1] = res_fft_buf[j + 1] * gain * nonlinear_gain;
+            enhanced[j] = res_fft_buf[j] * gain;
+            enhanced[j + 1] = res_fft_buf[j + 1] * gain;
             prev_enchanced_sqrd[k] =
                 enhanced[j] * enhanced[j] + enhanced[j + 1] * enhanced[j + 1];
         }

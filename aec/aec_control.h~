@@ -105,12 +105,6 @@ class AecControl {
      *				output_size - output data size addr in byte
      *				out_buf1 - estimated echo data addr
      *				output_size1 - estimated echo data size addr in
-     *				playout_switch - if playout thread is working
-     *				mic_switch - if microphone is capturing
-     *				amp_pwr_changed - if the amplifier power is manually
-     *							changed
-     *				amp_level - current amplifier power level
-     *				min_level - from what level to add nonlinearity
      *byte playout_switch - audio playout switch mic_switch - microphone capture
      *switch Output	-	None
      *

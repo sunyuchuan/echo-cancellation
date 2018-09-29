@@ -23,6 +23,6 @@ int AecResidualEchoCancellation(float *input_res, float *input_echo,
                                 float *pow_echo, float *crs_pow_rd,
                                 float *adpt_pow_echo,
                                 float *prev_enchanced_sqrd, float *enhanced,
-                                short *first_frame, float nonlinear_gain);
+                                short *first_frame);
 
 #endif
