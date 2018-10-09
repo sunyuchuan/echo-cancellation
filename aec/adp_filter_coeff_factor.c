@@ -1,12 +1,6 @@
-//
-// Created by layne on 18-9-29.
-//
+#include "aec/adp_filter_coeff_factor.h"
 
-#ifndef ADP_FILTER_COFF_H
-#define ADP_FILTER_COFF_H
-
-static constexpr int adp_filter_coeff_len = 1536;
-static float adp_filter_coeff[adp_filter_coeff_len] = {
+const float adp_filter_coeff_factor[ADP_FILTER_COEFF_FACTOR_LEN] = {
     0.0000000,  0.0000000,  0.0000000,  0.0000000,  0.0000000,  0.0000000,
     -0.1912227, 0.1850990,  -0.1741332, 0.0426635,  -0.2867716, 0.1073588,
     -0.1847986, 0.0758629,  -0.1033363, 0.0989619,  0.0860790,  0.0710217,
@@ -263,4 +257,3 @@ static float adp_filter_coeff[adp_filter_coeff_len] = {
     0.0000000,  0.0000000,  0.0000000,  0.0000000,  0.0000000,  0.0000000,
     0.0000000,  0.0000000,  0.0000000,  0.0000000,  0.0000000,  0.0000000,
     0.0000000,  0.0000000,  0.0000000,  0.0000000,  0.0000000,  0.0000000};
-#endif  // ADP_FILTER_COFF_H

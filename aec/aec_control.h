@@ -34,6 +34,7 @@ class AecControl {
     float *near_input_buf;
     float *far_input_buf;
 
+    float *adp_filter_coeff;
     float *far_fb_buf;
     float *near_fb_buf;
     float *echo_buf;

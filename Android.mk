@@ -5,6 +5,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE    := EchoCancellation
 LOCAL_SRC_FILES := aec/delay_estimator/delay_estimator_wrapper.c \
 					aec/delay_estimator/delay_estimator.c \
+					aec/adp_filter_coeff_factor.c \
 					aec/aec_control.cc \
 					aec/aec_core.c \
 					subband/analy_synth/filterbank.c \

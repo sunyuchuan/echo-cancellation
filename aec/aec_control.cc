@@ -7,7 +7,7 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "aec/adp_filter_coeff.h"
+#include "aec/adp_filter_coeff_factor.h"
 #include "aec/aec_core.h"
 #include "aec/aec_defines.h"
 #include "aec/delay_estimator/delay_estimator_internal.h"
@@ -41,6 +41,7 @@ AecControl::AecControl()
       fb_ctrl_near(NULL),
       near_input_buf(NULL),
       far_input_buf(NULL),
+      adp_filter_coeff(NULL),
       far_fb_buf(NULL),
       near_fb_buf(NULL),
       echo_buf(NULL),
@@ -132,6 +133,17 @@ int AecControl::AudioProcessing_AEC_Create() {
         this->AudioProcessing_AEC_Release();
         return -1;
     }
+
+    /*oversample rate is OVERSAMPLE_RATE and 1 complex number consists of 2
+     * float numbers so ADPF_LEN*OVERSAMPLE_RATE*2*/
+    adp_filter_coeff =
+        (float *)malloc(sizeof(float) * (ADPF_LEN * OVERSAMPLE_RATE) * 2);
+    if (adp_filter_coeff == NULL) {
+        this->AudioProcessing_AEC_Release();
+        return -1;
+    }
+    memcpy(adp_filter_coeff, adp_filter_coeff_factor,
+           sizeof(float) * ADP_FILTER_COEFF_FACTOR_LEN);
 
     far_fb_buf =
         (float *)malloc(sizeof(float) * (ADPF_LEN * OVERSAMPLE_RATE) * 2);
@@ -267,6 +279,8 @@ int AecControl::AudioProcessing_AEC_Init(float amp_perc, float min_perc) {
     memset(far_frame_buf, 0, (FRAME_LEN + PART_LEN) * sizeof(short));
     memset(near_frame_buf, 0, (FRAME_LEN + PART_LEN) * sizeof(short));
     memset(last_far_end_frame, 0, sizeof(short) * FRAME_LEN);
+    memcpy(adp_filter_coeff, adp_filter_coeff_factor,
+           sizeof(float) * ADP_FILTER_COEFF_FACTOR_LEN);
     memset(far_fb_buf, 0, sizeof(float) * (ADPF_LEN * OVERSAMPLE_RATE) * 2);
     memset(near_fb_buf, 0, sizeof(float) * (ADPF_LEN * OVERSAMPLE_RATE) * 2);
     memset(error_buf, 0, sizeof(float) * 2 * (SUBBAND_NUM / 2));
@@ -640,6 +654,11 @@ int AecControl::AudioProcessing_AEC_Release() {
 
     if (far_input_buf != NULL) {
         free(far_input_buf);
+    }
+
+    if (adp_filter_coeff != NULL) {
+        free(adp_filter_coeff);
+        adp_filter_coeff = NULL;
     }
 
     if (far_fb_buf != NULL) {
