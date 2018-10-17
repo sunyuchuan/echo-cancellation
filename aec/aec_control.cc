@@ -315,6 +315,7 @@ int AecControl::AudioProcessing_AEC_Init(float amp_perc, float min_perc) {
         return -1;
     }
     memset(far_history, 0, sizeof(float) * PART_LEN1 * MAX_DELAY);
+    memset(far_sepctrum_history, 0, sizeof(float) * SUBBAND_NUM * MAX_DELAY);
     far_history_pos = MAX_DELAY;
 
     return 0;
