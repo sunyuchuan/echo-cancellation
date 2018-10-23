@@ -33,5 +33,5 @@ utility/fft/rdft_8g_init.c
 utility/fft/rdft_8g_make_table.c 
 utility/fft/rdft_8g.c 
 utility/ringbuffer/ring_buffer.c 
-app/test1.cc)
+app/example.cc)
 target_link_libraries(${PROJECT_NAME} pthread)

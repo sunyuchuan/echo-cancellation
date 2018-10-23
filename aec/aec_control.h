@@ -73,7 +73,8 @@ class AecControl {
     /**************************************************************************
      *Function  -   initialize aec instance data members
      *
-     *Input		-	None
+     *Input		-	amp_perc: percentage of amplifier(0.0f ~ 1.0f)
+                    min_perc: min percentage of amplifier(0.0f ~ 1.0f)
      *Output	-	None
      *
      *Return	-	-1 - fail
@@ -107,10 +108,11 @@ class AecControl {
      *			output_size1 - estimated echo data size addr in
      *			playout_switch - if playout thread is working
      *			mic_switch - if microphone is capturing
-     *			amp_pwr_changed - if the amplifier power is
-     *manually changed amp_level - current amplifier power level min_level -
-     *from what level to add nonlinearity byte playout_switch - audio playout
-     *switch mic_switch - microphone capture switch Output	-	None
+     *			amp_pwr_changed - if the amplifier power is manually changed 
+     *          amp_level - current amplifier power level 
+     *          min_level - from what level to add nonlinearity byte playout_switch - audio playout
+     *                      switch mic_switch - microphone capture switch 
+     *Output	-	None
      *
      *Return	-	-1 - fail
      *				0  - succeed

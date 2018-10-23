@@ -23,8 +23,8 @@ int main() {
     unsigned int size, size1, count = 0;
     bool mic, playout;
 
-    fid_ref = fopen("/home/layne/audio/record/note/play.pcm", "rb");
-    fid_pri = fopen("/home/layne/audio/record/note/sdl.pcm", "rb");
+    fid_ref = fopen("/home/layne/audio/record/test_aec/play.pcm", "rb");
+    fid_pri = fopen("/home/layne/audio/record/test_aec/sdl.pcm", "rb");
     fid_out = fopen("out.pcm", "wb");
     fid_echo = fopen("echo.pcm", "wb");
 
