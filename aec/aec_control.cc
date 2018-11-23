@@ -471,7 +471,7 @@ int AecControl::AudioProcessing_AEC_Process(
             } else if (delay == -1) {
                 return -1;
             }
-            LOGI("Estimated delay is %d\n", delay);
+            // LOGI("Estimated delay is %d\n", delay);
 
             far_spectrum =
                 AlignedFarend(far_history_pos, far_sepctrum_history, delay);
