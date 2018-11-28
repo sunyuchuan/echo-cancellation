@@ -16,8 +16,8 @@
 // enum { kBandFirst = 7 };  // for 44k
 // enum { kBandLast = 38 };
 
-enum { kBandFirst = 96 };  // for 44k
-enum { kBandLast = 127 };
+// enum { kBandFirst = 96 };  // for 44k
+// enum { kBandLast = 127 };
 
 float ar_factor1 = 0.0625f;
 
@@ -51,7 +51,8 @@ static __inline void DelayEstimator_MeanEstimatorFloat(float new_value,
 //
 static unsigned int BinarySpectrumFix(float* spectrum,
                                       SpectrumType* threshold_spectrum,
-                                      int* threshold_initialized) {
+                                      int* threshold_initialized,
+                                      int kBandFirst, int kBandLast) {
     int i = kBandFirst;
     unsigned int out = 0;
 
@@ -102,9 +103,10 @@ void* DelayEstimator_CreateDelayEstimatorFarend(int spectrum_size,
     // the binary spectra in a uint32_t.
     // COMPILE_ASSERT(kBandLast - kBandFirst < 32);
 
-    if (spectrum_size >= kBandLast) {
-        self = malloc(sizeof(DelayEstimator));
-    }
+    // if (spectrum_size >= kBandLast) {
+    //    self = malloc(sizeof(DelayEstimator));
+    //}
+    self = malloc(sizeof(DelayEstimator));
 
     if (self != NULL) {
         int memory_fail = 0;
@@ -149,7 +151,8 @@ int DelayEstimator_InitDelayEstimatorFarend(void* handle) {
 }
 
 int DelayEstimator_AddFarSpectrumFloat(void* handle, float* far_spectrum,
-                                       int spectrum_size) {
+                                       int spectrum_size, int band_first,
+                                       int band_last) {
     DelayEstimatorFarend* self = (DelayEstimatorFarend*)handle;
     unsigned int binary_spectrum = 0;
 
@@ -167,7 +170,8 @@ int DelayEstimator_AddFarSpectrumFloat(void* handle, float* far_spectrum,
 
     // Get binary spectrum.
     binary_spectrum = BinarySpectrumFix(far_spectrum, self->mean_far_spectrum,
-                                        &(self->far_spectrum_initialized));
+                                        &(self->far_spectrum_initialized),
+                                        band_first, band_last);
     DelayEstimator_AddBinaryFarSpectrum(self->binary_farend, binary_spectrum);
 
     return 0;
@@ -242,7 +246,8 @@ int DelayEstimator_InitDelayEstimator(void* handle) {
 
 int DelayEstimator_DelayEstimatorProcessFloat(void* handle,
                                               float* near_spectrum,
-                                              int spectrum_size) {
+                                              int spectrum_size, int band_first,
+                                              int band_last) {
     DelayEstimator* self = (DelayEstimator*)handle;
     unsigned int binary_spectrum = 0;
 
@@ -260,7 +265,8 @@ int DelayEstimator_DelayEstimatorProcessFloat(void* handle,
 
     // Get binary spectra.
     binary_spectrum = BinarySpectrumFix(near_spectrum, self->mean_near_spectrum,
-                                        &(self->near_spectrum_initialized));
+                                        &(self->near_spectrum_initialized),
+                                        band_first, band_last);
 
     return DelayEstimator_ProcessBinarySpectrum(self->binary_handle,
                                                 binary_spectrum);

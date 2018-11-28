@@ -55,12 +55,13 @@ int DelayEstimator_InitDelayEstimatorFarend(void* handle);
 // Output:
 //    - handle          : Updated far-end instance.
 //
-int DelayEstimator_AddFarSpectrumFloat(void* handle, float* far_spectrum,
-                                       int spectrum_size);
+int DelayEstimator_AddFarSpectrumFix(void* handle, float* far_spectrum,
+                                     int spectrum_size);
 
 // See DelayEstimator_AddFarSpectrumFix() for description.
 int DelayEstimator_AddFarSpectrumFloat(void* handle, float* far_spectrum,
-                                       int spectrum_size);
+                                       int spectrum_size, int band_first,
+                                       int band_last);
 
 // Releases the memory allocated by DelayEstimator_CreateDelayEstimator(...)
 // Input:
@@ -121,7 +122,8 @@ int DelayEstimator_InitDelayEstimator(void* handle);
 //                        block.
 //      - spectrum_size : The size of the data arrays (same for both far- and
 //                        near-end).
-//      - near_q        : The Q-domain of the near-end data.
+//      - band_first    : From this band to start estimating delay
+//      - band_last     : To this band to stop estimating delay
 //
 // Output:
 //      - handle        : Updated instance.
@@ -133,7 +135,8 @@ int DelayEstimator_InitDelayEstimator(void* handle);
 //
 int DelayEstimator_DelayEstimatorProcessFloat(void* handle,
                                               float* near_spectrum,
-                                              int spectrum_size);
+                                              int spectrum_size, int band_first,
+                                              int band_last);
 
 // Returns the last calculated delay updated by the function
 // DelayEstimator_DelayEstimatorProcess(...).

@@ -23,8 +23,8 @@ int main() {
     unsigned int size, size1, count = 0;
     bool mic, playout;
 
-    fid_ref = fopen("/home/layne/audio/record/test_aec/play.pcm", "rb");
-    fid_pri = fopen("/home/layne/audio/record/test_aec/sdl.pcm", "rb");
+    fid_ref = fopen("/home/layne/audio/record/test_aec/play_aec_in.pcm", "rb");
+    fid_pri = fopen("/home/layne/audio/record/test_aec/speechin.pcm", "rb");
     fid_out = fopen("out.pcm", "wb");
     fid_echo = fopen("echo.pcm", "wb");
 
@@ -38,7 +38,7 @@ int main() {
     if (aec_inst->AudioProcessing_AEC_Create() < 0) {
         return -1;
     }
-    if (aec_inst->AudioProcessing_AEC_Init(0.8, 0.6) < 0) {
+    if (aec_inst->AudioProcessing_AEC_Init(0.8, 0.6, 1) < 0) {
         return -1;
     }
     if (OpenDelayRecordFile() < 0) {

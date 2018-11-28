@@ -9,6 +9,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} ${CMAKE_CXX_FLAGS} -O0 -g2 -ggdb -Wall
 -Wno-missing-prototypes -Wno-padded -Wno-old-style-cast")
 set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} ${CMAKE_CXX_FLAGS} -O3 -Wall")
 add_definitions(-D __STDC_CONSTANT_MACROS)
+add_definitions(-D DEBUG_ON_LINUX)
 set(CMAKE_CXX_COMPILER "clang++")
 set(CMAKE_C_EXTENSIONS      ON)
 set(CMAKE_C_STANDARD        99)

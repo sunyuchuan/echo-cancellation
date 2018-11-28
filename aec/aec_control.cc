@@ -32,6 +32,8 @@ AecControl::AecControl()
       last_far_end_frame(NULL),
       delay_estimator_farend(NULL),
       delay_estimator(NULL),
+      band_first(0),
+      band_last(0),
       current_delay(-2),
       far_history(NULL),
       far_sepctrum_history(NULL),
@@ -266,7 +268,8 @@ int AecControl::AudioProcessing_AEC_Create() {
     return 0;
 }
 
-int AecControl::AudioProcessing_AEC_Init(float amp_perc, float min_perc) {
+int AecControl::AudioProcessing_AEC_Init(float amp_perc, float min_perc,
+                                         int delay_band_select) {
     far_buf_write_pos = 0;
     far_buf_read_pos = 0;
     known_delay = 0;
@@ -318,6 +321,16 @@ int AecControl::AudioProcessing_AEC_Init(float amp_perc, float min_perc) {
     memset(far_sepctrum_history, 0, sizeof(float) * SUBBAND_NUM * MAX_DELAY);
     far_history_pos = MAX_DELAY;
 
+    if (delay_band_select == 0) {
+        band_first = 7;
+        band_last = 38;
+    } else if (delay_band_select == 1) {
+        band_first = 96;
+        band_last = 127;
+    } else {
+        return -1;
+    }
+
     return 0;
 }
 
@@ -365,9 +378,9 @@ int AecControl::AudioProcessing_AEC_FillFarBuf(char *ref, short sample_size,
                 UpdateFarHistory(&far_history_pos, far_history,
                                  freq_dmn_far_abs, far_sepctrum_history,
                                  fb_ctrl_far->analysis_fft_buf);
-                if (DelayEstimator_AddFarSpectrumFloat(delay_estimator_farend,
-                                                       freq_dmn_far_abs,
-                                                       PART_LEN1) < 0) {
+                if (DelayEstimator_AddFarSpectrumFloat(
+                        delay_estimator_farend, freq_dmn_far_abs, PART_LEN1,
+                        band_first, band_last) < 0) {
                     return -1;
                 }
             }
@@ -459,13 +472,15 @@ int AecControl::AudioProcessing_AEC_Process(
         }
 
         if (mic_switch == true && playout_switch == true) {
-            if (DelayEstimator_AddFarSpectrumFloat(
-                    delay_estimator_farend, freq_dmn_far_abs, PART_LEN1) < 0) {
+            if (DelayEstimator_AddFarSpectrumFloat(delay_estimator_farend,
+                                                   freq_dmn_far_abs, PART_LEN1,
+                                                   band_first, band_last) < 0) {
                 return -1;
             }
 
             delay = DelayEstimator_DelayEstimatorProcessFloat(
-                delay_estimator, freq_dmn_near_abs, PART_LEN1);
+                delay_estimator, freq_dmn_near_abs, PART_LEN1, band_first,
+                band_last);
             if (delay == -2) {
                 delay = 0;
             } else if (delay == -1) {

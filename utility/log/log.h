@@ -1,7 +1,7 @@
 #ifndef _AEC_LOG_H_
 #define _AEC_LOG_H_
 
-#ifdef DEBUG_IN_PC
+#ifdef DEBUG_ON_LINUX
 
 #define LOGD printf
 #define LOGI printf

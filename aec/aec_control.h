@@ -22,6 +22,8 @@ class AecControl {
 
     void *delay_estimator_farend;
     void *delay_estimator;
+    int band_first;
+    int band_last;
     unsigned short current_delay;
     float *far_history;
     float *far_sepctrum_history;
@@ -73,14 +75,17 @@ class AecControl {
     /**************************************************************************
      *Function  -   initialize aec instance data members
      *
-     *Input		-	amp_perc: percentage of amplifier(0.0f ~ 1.0f)
-                    min_perc: min percentage of amplifier(0.0f ~ 1.0f)
+     *Input	    -	amp_perc: percentage of amplifier(0.0f ~ 1.0f)
+     *          -	min_perc: min percentage of amplifier(0.0f ~ 1.0f)
+     *          -	delay_band_select - 0 - use low band
+     *		    -	1 - use high band
      *Output	-	None
      *
      *Return	-	-1 - fail
      *				0  - succeed
      **************************************************************************/
-    int AudioProcessing_AEC_Init(float amp_perc, float min_perc);
+    int AudioProcessing_AEC_Init(float amp_perc, float min_perc,
+                                 int delay_band_select);
 
     /**************************************************************************
      *Function  -   fill aec far-end buffer
@@ -108,11 +113,10 @@ class AecControl {
      *			output_size1 - estimated echo data size addr in
      *			playout_switch - if playout thread is working
      *			mic_switch - if microphone is capturing
-     *			amp_pwr_changed - if the amplifier power is manually changed 
-     *          amp_level - current amplifier power level 
-     *          min_level - from what level to add nonlinearity byte playout_switch - audio playout
-     *                      switch mic_switch - microphone capture switch 
-     *Output	-	None
+     *			amp_pwr_changed - if the amplifier power is manually
+     *changed amp_level - current amplifier power level min_level - from what
+     *level to add nonlinearity byte playout_switch - audio playout switch
+     *mic_switch - microphone capture switch Output	-	None
      *
      *Return	-	-1 - fail
      *				0  - succeed
