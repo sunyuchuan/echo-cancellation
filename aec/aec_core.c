@@ -71,11 +71,13 @@ void SetNonlinearGain(float curr_level, float *gain, float min_level) {
     if (curr_level <= min_level) {
         *gain = 1.0f;
     } else if (curr_level < (min_level + 0.1f)) {
-        *gain = 0.9f;
-    } else if (curr_level < (min_level + 0.2f)) {
         *gain = 0.8f;
-    } else if (curr_level < (min_level + 0.3f)) {
+    } else if (curr_level < (min_level + 0.2f)) {
         *gain = 0.7f;
+    } else if (curr_level < (min_level + 0.3f)) {
+        *gain = 0.6f;
+    }else{
+	*gain = 0.5f;
     }
 }
 
