@@ -35,4 +35,7 @@
 
 #define POST_FFT_LEN 1024
 
+#define TARGET_DIM	(int)(1024.0f*8000.0f/44100.0f)
+#define MAX_LAYER_DIM_NN 512
+
 #endif

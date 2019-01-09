@@ -32,6 +32,7 @@ class AecControl {
     FFT_Config *realFFT;
     FilterBankControl *fb_ctrl_far;
     FilterBankControl *fb_ctrl_near;
+    FilterBankControl *fb_ctrl_echo;
 
     float *near_input_buf;
     float *far_input_buf;

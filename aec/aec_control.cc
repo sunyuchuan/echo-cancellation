@@ -17,6 +17,7 @@ extern "C" {
 #include "utility/fft/fft_wrapper.h"
 #include "utility/fft/rdft_8g_init.h"
 #include "utility/log/log.h"
+#include "aec/post_process/post_process_config.h"
 
 #define IFFT_GAIN (32767.0f * 2.0f / 1024.0f)
 
@@ -41,6 +42,7 @@ AecControl::AecControl()
       realFFT(NULL),
       fb_ctrl_far(NULL),
       fb_ctrl_near(NULL),
+	  fb_ctrl_echo(NULL),
       near_input_buf(NULL),
       far_input_buf(NULL),
       adp_filter_coeff(NULL),
@@ -134,6 +136,12 @@ int AecControl::AudioProcessing_AEC_Create() {
         this->AudioProcessing_AEC_Release();
         return -1;
     }
+
+    if(DftFilterBankCreate(&fb_ctrl_echo)<0)
+	{
+		this->AudioProcessing_AEC_Release();
+		return -1;
+	}
 
     near_input_buf = (float *)malloc(sizeof(float) * PROTOTYPE_FILTER_LEN);
     if (near_input_buf == NULL) {
@@ -329,8 +337,11 @@ int AecControl::AudioProcessing_AEC_Init(float amp_perc, float min_perc,
     far_buf_read_pos = 0;
     known_delay = 0;
     last_known_delay = 0;
-
+#if AEC_POST_PROCESSING_ON
+#if AEC_POST_PROCESSING_COH
     SetNonlinearGain(amp_perc, &nonlinearity, min_perc);
+#endif
+#endif
 
     RingBuffer_InitBuffer(far_end_buf);
 
@@ -393,6 +404,7 @@ int AecControl::AudioProcessing_AEC_Init(float amp_perc, float min_perc,
 
     DftFilterBankInit(fb_ctrl_far);
     DftFilterBankInit(fb_ctrl_near);
+    DftFilterBankInit(fb_ctrl_echo);
 
     if (DelayEstimator_InitDelayEstimatorFarend(delay_estimator_farend) != 0) {
         return -1;
@@ -497,9 +509,9 @@ int AecControl::AudioProcessing_AEC_Process(
 	;
 
     short nFrames = (sample_size >> 1) / SUBBAND_FRAME_SHIFT, output_sample_num,
-          output_sample_num1, seg_len = 0, data_len_record1 = POST_FFT_LEN / 2,
-          data_len_record2 = POST_FFT_LEN / 2, *out = (short *)out_buf,
-          *near = (short *)pri;
+          output_sample_num1, output_sample_num2,seg_len = 0, data_len_record1 = POST_FFT_LEN / 2,
+          data_len_record2 = POST_FFT_LEN / 2, data_len_record3 = POST_FFT_LEN / 2,
+		  *out = (short *)out_buf, *near = (short *)pri;
     float *far_spectrum, tmpno1, tmpno2, tmpno3, tmpno4;
     int delay;
 
@@ -510,9 +522,6 @@ int AecControl::AudioProcessing_AEC_Process(
     }
 
     *output_size1 = 0;
-#if	AEC_SAVE_FAR
-    *output_size2 = 0;
-#endif
     *output_size = 0;
     if (amp_pwr_changed) {
 #if AEC_POST_PROCESSING_ON
@@ -588,7 +597,7 @@ int AecControl::AudioProcessing_AEC_Process(
             // 5.linear echo cancellation
             AecDeecho(far_spectrum, fb_ctrl_near->analysis_fft_buf, far_fb_buf,
                       near_fb_buf, adp_filter_coeff,
-                      fb_ctrl_far->synthesis_fft_buf,
+                      fb_ctrl_echo->synthesis_fft_buf,
                       fb_ctrl_near->synthesis_fft_buf, freq_dmn_near_abs, Rss,
                       Rdd, Ree);
         } else if (mic_switch == true && playout_switch == false) {
@@ -610,7 +619,6 @@ int AecControl::AudioProcessing_AEC_Process(
 		memcpy(fb_ctrl_far->synthesis_fft_buf,far_spectrum,SUBBAND_NUM*sizeof(float));
                 DftFilterBankSynthesis(fb_ctrl_far, realFFT, output2,
                                        &output_sample_num2);
-                *output_size2 += output_sample_num2 << 1;
                 memcpy(far_frame_save+data_len_record3,output2,output_sample_num2*sizeof(float));
 		data_len_record3 += output_sample_num2;
 
@@ -781,6 +789,11 @@ int AecControl::AudioProcessing_AEC_Release() {
         return -1;
     }
 
+    if(DftFilterBankFree(fb_ctrl_echo)<0)
+	{
+		return -1;
+	}
+
     if (near_input_buf != NULL) {
         free(near_input_buf);
     }
@@ -884,6 +897,7 @@ int AecControl::AudioProcessing_AEC_Release() {
     {
 	free(far_frame_save);
     }
+#endif
 #endif
 
     delete this;
