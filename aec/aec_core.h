@@ -25,4 +25,8 @@ int AecResidualEchoCancellation(float *input_res, float *input_echo,
                                 float *prev_enchanced_sqrd, float *enhanced,
                                 short *first_frame, float nonlinear_gain);
 
+int AecResidualEchoNN(float *input_res, float *input_echo, float *input_aligned_far,
+		  float *concat_buf,float *nn_layer_buf, FFT_Config *fft_conf,
+		  float *log_table,int *exp_table,int exp_precision, float *enhanced);
+
 #endif

@@ -51,16 +51,27 @@ AecControl::AecControl()
       post_res_frame(NULL),
 #if AEC_POST_PROCESSING_ON
       post_fft_conf(NULL),
+#if AEC_POST_PROCESSING_COH
+      nonlinearity(1.0f),
       coh_res(NULL),
       coh_echo(NULL),
       coh_rd(NULL),
       adpt_coh_echo(NULL),
       prev_enchanced_sqrd(NULL),
+#endif
+#if AEC_POST_PROCESSING_NN
+      ln_lookup(NULL),
+      exp_lookup(NULL),
+      joint_buf(NULL),
+      nn_buf(NULL),
+#endif
       enhanced(NULL),
-      nonlinearity(1.0f),
       first_frame(1),
-      post_echo_frame(NULL),
       vlp_buf(NULL),
+#endif
+      post_echo_frame(NULL),
+#if	AEC_SAVE_FAR
+      far_frame_save(NULL),
 #endif
       Rss(NULL),
       Rdd(NULL),
@@ -192,58 +203,102 @@ int AecControl::AudioProcessing_AEC_Create() {
         return -1;
     }
 #if AEC_POST_PROCESSING_ON
-    if (rdft_create(&post_fft_conf, POST_FFT_LEN) < 0) {
-        this->AudioProcessing_AEC_Release();
-        return -1;
+    if(rdft_create(&post_fft_conf, POST_FFT_LEN)<0)
+    {
+	this->AudioProcessing_AEC_Release();
+	return -1;
+    }
+#if AEC_POST_PROCESSING_COH
+coh_res = (float*)malloc(sizeof(float)*(POST_FFT_LEN/2+1));
+    if(coh_res==NULL)
+    {
+	this->AudioProcessing_AEC_Release();
+	return -1;
     }
 
-    coh_res = (float *)malloc(sizeof(float) * (POST_FFT_LEN / 2 + 1));
-    if (coh_res == NULL) {
-        this->AudioProcessing_AEC_Release();
-        return -1;
+    coh_echo = (float*)malloc(sizeof(float)*(POST_FFT_LEN/2+1));
+    if(coh_echo==NULL)
+    {
+	this->AudioProcessing_AEC_Release();
+	return -1;
     }
 
-    coh_echo = (float *)malloc(sizeof(float) * (POST_FFT_LEN / 2 + 1));
-    if (coh_echo == NULL) {
-        this->AudioProcessing_AEC_Release();
-        return -1;
+    coh_rd = (float*)malloc(sizeof(float)*(POST_FFT_LEN));
+    if(coh_echo==NULL)
+    {
+	this->AudioProcessing_AEC_Release();
+	return -1;
     }
 
-    coh_rd = (float *)malloc(sizeof(float) * (POST_FFT_LEN));
-    if (coh_echo == NULL) {
-        this->AudioProcessing_AEC_Release();
-        return -1;
+    adpt_coh_echo = (float*)malloc(sizeof(float)*(POST_FFT_LEN/2+1));
+    if(adpt_coh_echo==NULL)
+    {
+	this->AudioProcessing_AEC_Release();
+	return -1;
     }
 
-    adpt_coh_echo = (float *)malloc(sizeof(float) * (POST_FFT_LEN / 2 + 1));
-    if (adpt_coh_echo == NULL) {
-        this->AudioProcessing_AEC_Release();
-        return -1;
+    prev_enchanced_sqrd = (float*)malloc(sizeof(float)*(POST_FFT_LEN/2+1));
+    if(prev_enchanced_sqrd==NULL)
+    {
+	this->AudioProcessing_AEC_Release();
+	return -1;
+    }
+#endif
+#if AEC_POST_PROCESSING_NN
+    ln_lookup = (float*)malloc(sizeof(float)*(1<<AEC_LN_PRECISION));
+    if(ln_lookup==NULL)
+    {
+	this->AudioProcessing_AEC_Release();
+	return -1;
+    }
+    exp_lookup = (int*)malloc(sizeof(int)*(1<<AEC_EXP_PRECISION));
+    if(exp_lookup==NULL)
+    {
+	this->AudioProcessing_AEC_Release();
+	return -1;
+    }
+    joint_buf = (float*)malloc(sizeof(float)*(TARGET_DIM*3));
+    if(joint_buf==NULL)
+    {
+	this->AudioProcessing_AEC_Release();
+	return -1;
+    }
+    nn_buf = (float*)malloc(sizeof(float)*MAX_LAYER_DIM_NN);
+    if(nn_buf==NULL)
+    {
+	this->AudioProcessing_AEC_Release();
+	return -1;
+    }
+#endif
+    enhanced = (float*)malloc(sizeof(float)*(POST_FFT_LEN));
+    if(enhanced==NULL)
+    {
+	this->AudioProcessing_AEC_Release();
+	return -1;
     }
 
-    prev_enchanced_sqrd =
-        (float *)malloc(sizeof(float) * (POST_FFT_LEN / 2 + 1));
-    if (prev_enchanced_sqrd == NULL) {
-        this->AudioProcessing_AEC_Release();
-        return -1;
+    vlp_buf = (float*)malloc(sizeof(float)*(POST_FFT_LEN/2));
+    if(vlp_buf==NULL)
+    {
+	this->AudioProcessing_AEC_Release();
+	return -1;
+    }
+#endif
+
+    post_echo_frame = (float*)malloc(sizeof(float)*(POST_FFT_LEN));
+    if(post_echo_frame==NULL)
+    {
+	this->AudioProcessing_AEC_Release();
+	return -1;
     }
 
-    enhanced = (float *)malloc(sizeof(float) * (POST_FFT_LEN));
-    if (enhanced == NULL) {
-        this->AudioProcessing_AEC_Release();
-        return -1;
-    }
 
-    post_echo_frame = (float *)malloc(sizeof(float) * (POST_FFT_LEN));
-    if (post_echo_frame == NULL) {
-        this->AudioProcessing_AEC_Release();
-        return -1;
-    }
-
-    vlp_buf = (float *)malloc(sizeof(float) * (POST_FFT_LEN / 2));
-    if (vlp_buf == NULL) {
-        this->AudioProcessing_AEC_Release();
-        return -1;
+#if	AEC_SAVE_FAR
+    far_frame_save = (float*)malloc(sizeof(float)*(POST_FFT_LEN));
+    if(far_frame_save==NULL)
+    {
+	this->AudioProcessing_AEC_Release();
+	return -1;
     }
 #endif
 
@@ -293,16 +348,44 @@ int AecControl::AudioProcessing_AEC_Init(float amp_perc, float min_perc,
     memset(Ree, 0, sizeof(float) * (SUBBAND_NUM / 2 + 1));
     memset(post_res_frame, 0, sizeof(float) * (POST_FFT_LEN));
 #if AEC_POST_PROCESSING_ON
-    memset(coh_res, 0, sizeof(float) * (POST_FFT_LEN / 2 + 1));
-    memset(coh_echo, 0, sizeof(float) * (POST_FFT_LEN / 2 + 1));
-    memset(coh_rd, 0, sizeof(float) * (POST_FFT_LEN));
-    memset(adpt_coh_echo, 0, sizeof(float) * (POST_FFT_LEN / 2 + 1));
-    memset(prev_enchanced_sqrd, 0, sizeof(float) * (POST_FFT_LEN / 2 + 1));
-    memset(enhanced, 0, sizeof(float) * (POST_FFT_LEN));
-    memset(post_echo_frame, 0, sizeof(float) * (POST_FFT_LEN));
-    memset(vlp_buf, 0, sizeof(float) * (POST_FFT_LEN / 2));
-    rdft_init(post_fft_conf->ip, post_fft_conf->w, POST_FFT_LEN,
-              &post_fft_conf->nw, &post_fft_conf->nc);
+    rdft_init(post_fft_conf->ip,post_fft_conf->w,POST_FFT_LEN,&post_fft_conf->nw,&post_fft_conf->nc);
+#if AEC_POST_PROCESSING_COH
+    memset(coh_res, 0, sizeof(float)*(POST_FFT_LEN/2+1));
+    memset(coh_echo, 0, sizeof(float)*(POST_FFT_LEN/2+1));
+    memset(coh_rd, 0, sizeof(float)*(POST_FFT_LEN));
+    memset(adpt_coh_echo, 0, sizeof(float)*(POST_FFT_LEN/2+1));
+    memset(prev_enchanced_sqrd, 0, sizeof(float)*(POST_FFT_LEN/2+1));
+#endif
+#if AEC_POST_PROCESSING_NN
+    //nature logarithm lookup init
+    float oneToTwo = 1.0f + (1.0f/(float)(1<<(AEC_LN_PRECISION+1)));
+    for(int i = 0;i<(1<<AEC_LN_PRECISION);i++)
+    {
+	// make y-axis value for table element
+	ln_lookup[i] = logf(oneToTwo)/0.69314718055995f;
+	oneToTwo += 1.0f /(float)(1<< AEC_LN_PRECISION);
+    }
+    //exponential lookup init
+    float zeroToOne = 1.0f / (((float)(1 << AEC_EXP_PRECISION)) * 2.0f),
+	_2pow23 = 8388608.0f;
+    for( int i = 0;  i < (1 << AEC_EXP_PRECISION);  ++i )
+    {
+	// make y-axis value for table element
+	const float f = (powf(2.0f,zeroToOne ) - 1.0f) * _2pow23;
+	exp_lookup[i] = static_cast<unsigned int>( f < _2pow23 ? f : (_2pow23 - 1.0f) );
+	zeroToOne += 1.0f/(float)(1 << AEC_EXP_PRECISION);
+    }
+    memset(joint_buf, 0, sizeof(float)*(TARGET_DIM*3));
+    memset(nn_buf, 0, sizeof(float)*(MAX_LAYER_DIM_NN));
+#endif
+    memset(enhanced, 0, sizeof(float)*(POST_FFT_LEN));
+    memset(vlp_buf, 0, sizeof(float)*(POST_FFT_LEN/2));
+#endif
+
+    memset(post_echo_frame, 0, sizeof(float)*(POST_FFT_LEN));
+
+#if	AEC_SAVE_FAR
+    memset(far_frame_save, 0, sizeof(float)*(POST_FFT_LEN));
 #endif
 
     rdft_init(realFFT->ip, realFFT->w, (PART_LEN << 1), &realFFT->nw,
@@ -407,7 +490,11 @@ int AecControl::AudioProcessing_AEC_Process(
         freq_dmn_near_inv_abs[SUBBAND_NUM / 2 + 1],
         freq_dmn_far_abs[SUBBAND_NUM / 2 + 1],
         freq_dmn_near_abs[SUBBAND_NUM / 2 + 1], output[SUBBAND_NUM / 2],
-        output1[SUBBAND_NUM / 2];
+        output1[SUBBAND_NUM / 2]
+#if	AEC_SAVE_FAR
+	,output2[SUBBAND_NUM/2]
+#endif
+	;
 
     short nFrames = (sample_size >> 1) / SUBBAND_FRAME_SHIFT, output_sample_num,
           output_sample_num1, seg_len = 0, data_len_record1 = POST_FFT_LEN / 2,
@@ -423,9 +510,16 @@ int AecControl::AudioProcessing_AEC_Process(
     }
 
     *output_size1 = 0;
+#if	AEC_SAVE_FAR
+    *output_size2 = 0;
+#endif
     *output_size = 0;
     if (amp_pwr_changed) {
-        SetNonlinearGain(amp_level, &nonlinearity, min_level);
+#if AEC_POST_PROCESSING_ON
+#if AEC_POST_PROCESSING_COH
+	SetNonlinearGain(amp_level, &nonlinearity, min_level);
+#endif
+#endif
     }
 
     for (i = 0; i < nFrames; i++) {
@@ -513,19 +607,31 @@ int AecControl::AudioProcessing_AEC_Process(
             data_len_record1 += output_sample_num;
 #if AEC_POST_PROCESSING_ON
             if (playout_switch == true) {
-                DftFilterBankSynthesis(fb_ctrl_far, realFFT, output1,
-                                       &output_sample_num1);
-                *output_size1 += output_sample_num1 << 1;
-                memcpy(post_echo_frame + data_len_record2, output1,
-                       output_sample_num * sizeof(float));
-                data_len_record2 += output_sample_num;
+		memcpy(fb_ctrl_far->synthesis_fft_buf,far_spectrum,SUBBAND_NUM*sizeof(float));
+                DftFilterBankSynthesis(fb_ctrl_far, realFFT, output2,
+                                       &output_sample_num2);
+                *output_size2 += output_sample_num2 << 1;
+                memcpy(far_frame_save+data_len_record3,output2,output_sample_num2*sizeof(float));
+		data_len_record3 += output_sample_num2;
+
+		DftFilterBankSynthesis(fb_ctrl_echo,realFFT,output1,&output_sample_num1);
+		*output_size1 += output_sample_num1<<1;
+		memcpy(post_echo_frame+data_len_record2,output1,output_sample_num1*sizeof(float));
+		data_len_record2 += output_sample_num1;
             }
 
             if (data_len_record1 == POST_FFT_LEN && playout_switch == true) {
+#if AEC_POST_PROCESSING_COH
                 AecResidualEchoCancellation(
                     post_res_frame, post_echo_frame, post_fft_conf, coh_res,
                     coh_echo, coh_rd, adpt_coh_echo, prev_enchanced_sqrd,
                     enhanced, &first_frame, nonlinearity);
+#endif
+#if AEC_POST_PROCESSING_NN
+		AecResidualEchoNN(post_res_frame, post_echo_frame, far_frame_save,
+				joint_buf, nn_buf, post_fft_conf, ln_lookup, 
+				exp_lookup,AEC_EXP_PRECISION, enhanced);
+#endif
                 memmove(post_res_frame, post_res_frame + (POST_FFT_LEN >> 1),
                         sizeof(float) * (POST_FFT_LEN >> 1));
                 memmove(post_echo_frame, post_echo_frame + (POST_FFT_LEN >> 1),
@@ -576,11 +682,22 @@ int AecControl::AudioProcessing_AEC_ClearFarFrameBuf() {
 int AecControl::AudioProcessing_AEC_ResetNearState() {
     DftFilterBankReset(fb_ctrl_near);
 #if AEC_POST_PROCESSING_ON
-    memset(post_echo_frame, 0, sizeof(float) * (POST_FFT_LEN));
-    memset(post_res_frame, 0, sizeof(float) * (POST_FFT_LEN));
-    memset(prev_enchanced_sqrd, 0, sizeof(float) * (POST_FFT_LEN / 2 + 1));
-    memset(vlp_buf, 0, sizeof(float) * (POST_FFT_LEN / 2));
+#if AEC_POST_PROCESSING_COH
+    memset(post_echo_frame, 0, sizeof(float)*(POST_FFT_LEN));
+    memset(post_res_frame, 0, sizeof(float)*(POST_FFT_LEN));
+    memset(prev_enchanced_sqrd, 0, sizeof(float)*(POST_FFT_LEN/2+1));
+#endif
+    memset(vlp_buf, 0, sizeof(float)*(POST_FFT_LEN/2));
     first_frame = 1;
+#if AEC_POST_PROCESSING_NN
+    memset(joint_buf, 0, sizeof(float) * (TARGET_DIM*3));
+    memset(nn_buf, 0, sizeof(float)*(MAX_LAYER_DIM_NN));
+#endif
+#endif
+    memset(post_echo_frame, 0, sizeof(float) * (POST_FFT_LEN));
+
+#if AEC_SAVE_FAR
+    memset(far_frame_save, 0, sizeof(float) * (POST_FFT_LEN));
 #endif
 
     return 0;
@@ -709,42 +826,64 @@ int AecControl::AudioProcessing_AEC_Release() {
         free(post_res_frame);
     }
 #if AEC_POST_PROCESSING_ON
-    if (rdft_free(post_fft_conf) < 0) {
-        return -1;
+    if(rdft_free(post_fft_conf)<0)
+    {
+	return -1;
+    }
+#if AEC_POST_PROCESSING_COH
+    if(coh_res!=NULL)
+    {
+	free(coh_res);
     }
 
-    if (coh_res != NULL) {
-        free(coh_res);
+    if(coh_echo!=NULL)
+    {
+	free(coh_echo);
     }
 
-    if (coh_echo != NULL) {
-        free(coh_echo);
+    if(coh_rd!=NULL)
+    {
+	free(coh_rd);
     }
 
-    if (coh_rd != NULL) {
-        free(coh_rd);
+    if(adpt_coh_echo!=NULL)
+    {
+	free(adpt_coh_echo);
     }
 
-    if (adpt_coh_echo != NULL) {
-        free(adpt_coh_echo);
+    if(prev_enchanced_sqrd!=NULL)
+    {
+	free(prev_enchanced_sqrd);
+    }
+#endif
+#if AEC_POST_PROCESSING_NN
+    if(ln_lookup!=NULL)
+    {
+	free(ln_lookup);
+    }
+    if(exp_lookup!=NULL)
+    {
+	free(exp_lookup);
+    }
+    if(joint_buf!=NULL)
+    {
+	free(joint_buf);
+    }
+    if(nn_buf!=NULL)
+    {
+	free(nn_buf);
+    }
+#endif
+    if(post_echo_frame!=NULL)
+    {
+	free(post_echo_frame);
     }
 
-    if (prev_enchanced_sqrd != NULL) {
-        free(prev_enchanced_sqrd);
+#if AEC_SAVE_FAR
+    if(far_frame_save!=NULL)
+    {
+	free(far_frame_save);
     }
-
-    if (enhanced != NULL) {
-        free(enhanced);
-    }
-
-    if (post_echo_frame != NULL) {
-        free(post_echo_frame);
-    }
-
-    if (vlp_buf != NULL) {
-        free(vlp_buf);
-    }
-
 #endif
 
     delete this;

@@ -7,6 +7,9 @@
 #include "aec/post_process/sqrt_hanning_win.h"
 #include "utility/fft/rdft_8g.h"
 #include "utility/math/fast_math.h"
+#include "aec/post_process/aec_post_net.h"
+#include "aec/post_process/hanning_win.h"
+#include "aec/post_process/post_process_config.h"
 
 #define ALPHA (-0.5f)
 #define BETA (0.01f)
@@ -403,4 +406,207 @@ int AecResidualEchoCancellation(float *input_res, float *input_echo,
     }
 
     return 0;
+}
+
+static void AecPostProcess_DenseLayer_555X512_ActivationTanh(float *input,float *output, int *exp_table, int exp_precision)
+{
+	int i,j;
+	float sum1 = 0.0f,sum2 = 0.0f,sum3 = 0.0f,sum4 = 0.0f,sum5 = 0.0f,*w;
+
+	for(i=0;i<512;i++)
+	{
+		w = &W_DenseLayer1[i][0];
+		for(j=0;j<555;j+=5)
+		{
+			sum1+=input[j]*w[j];
+			sum2+=input[j+1]*w[j+1];
+			sum3+=input[j+2]*w[j+2];
+			sum4+=input[j+3]*w[j+3];
+			sum5+=input[j+4]*w[j+4];
+		}
+		sum1+=(sum2 + sum3 + sum4 + sum5 + W_DenseLayer1_Bias[i]);
+		output[i] = _tanh(sum1,exp_table,exp_precision);
+		//output[i] = tanh(sum1);
+		sum1 = 0.f;
+		sum2 = 0.f;
+		sum3 = 0.f;
+		sum4 = 0.f;
+		sum5 = 0.f;
+	}
+}
+
+static void AecPostProcess_DenseLayer_512X256_ActivationTanh(float *input,float *output, int *exp_table, int exp_precision)
+{
+	int i,j;
+	float sum1 = 0.0f,sum2 = 0.0f,sum3 = 0.0f,sum4 = 0.0f,*w;
+
+	for(i=0;i<256;i++)
+	{
+		w = &W_DenseLayer2[i][0];
+		for(j=0;j<512;j+=4)
+		{
+			sum1+=input[j]*w[j];
+			sum2+=input[j+1]*w[j+1];
+			sum3+=input[j+2]*w[j+2];
+			sum4+=input[j+3]*w[j+3];
+		}
+
+		sum1+=(sum2 + sum3 + sum4 + W_DenseLayer2_Bias[i]);
+		output[i] = _tanh(sum1,exp_table,exp_precision);
+		//output[i] = tanh(sum1);
+		sum1 = 0.f;
+		sum2 = 0.f;
+		sum3 = 0.f;
+		sum4 = 0.f;
+	}
+}
+
+static void AecPostProcess_DenseLayer_256X256_ActivationTanh(float *input,float *output, int *exp_table, int exp_precision)
+{
+	int i,j;
+	float sum1 = 0.0f,sum2 = 0.0f,sum3 = 0.0f,sum4 = 0.0f,*w;
+
+	for(i=0;i<256;i++)
+	{
+		w = &W_DenseLayer3[i][0];
+		for(j=0;j<256;j+=4)
+		{
+			sum1+=input[j]*w[j];
+			sum2+=input[j+1]*w[j+1];
+			sum3+=input[j+2]*w[j+2];
+			sum4+=input[j+3]*w[j+3];
+		}
+		sum1+=(sum2 + sum3 + sum4 + W_DenseLayer3_Bias[i]);
+		output[i] = _tanh(sum1,exp_table,exp_precision);
+		//output[i] = tanh(sum1);
+		sum1 = 0.f;
+		sum2 = 0.f;
+		sum3 = 0.f;
+		sum4 = 0.f;
+	}
+
+}
+
+static void AecPostProcess_DenseLayer_256X185_ActivationTanh(float *input,float *output, int *exp_table, int exp_precision)
+{
+	int i,j;
+	float sum1 = 0.0f,sum2 = 0.0f,sum3 = 0.0f,sum4 = 0.0f,*w;
+
+	for(i=0;i<185;i++)
+	{
+		w = &W_DenseLayer4[i][0];
+		for(j=0;j<256;j+=4)
+		{
+			sum1+=input[j]*w[j];
+			sum2+=input[j+1]*w[j+1];
+			sum3+=input[j+2]*w[j+2];
+			sum4+=input[j+3]*w[j+3];
+		}
+		sum1+=(sum2 + sum3 + sum4 + W_DenseLayer4_Bias[i]);
+		output[i] = _tanh(sum1,exp_table,exp_precision);
+		//output[i] = tanh(sum1);
+		sum1 = 0.f;
+		sum2 = 0.f;
+		sum3 = 0.f;
+		sum4 = 0.f;
+	}
+}
+
+int AecResidualEchoNN(float *input_res, float *input_echo, float *input_aligned_far,
+						float *concat_buf,float *nn_layer_buf, FFT_Config *fft_conf,
+						float *log_table,int *exp_table,int exp_precision, float *enhanced)
+{
+	short i,j,p,q,m,n,f1,f2,f3;
+	float *in_res = input_res, *in_echo = input_echo, *in_far = input_aligned_far;
+	float tmpno1,tmpno2,tmpno3,tmpno4,a1,a2,res_fft_buf[POST_FFT_LEN],echo_fft_buf[POST_FFT_LEN],far_fft_buf[POST_FFT_LEN];
+	
+	/*for(i=0;i<POST_FFT_LEN;i++)
+	{
+		f1 = (short)(input_res[i]*32767.0f);
+		input_res[i] = ((float)f1)*(1.0f/32768.0f);
+		f2 = (short)(input_echo[i]*32767.0f);
+		input_echo[i] = ((float)f2)*(1.0f/32768.0f);
+		f3 = (short)(input_aligned_far[i]*32767.0f);
+		input_aligned_far[i] = ((float)f3)*(1.0f/32768.0f);
+	}*/
+	
+	//update input data and window frame
+	for(i=0;i<POST_FFT_LEN;i+=2)
+	{
+		//sum1+=(in_res[i]+in_res[i+1]);
+		res_fft_buf[i] = hanning_win[i]*in_res[i];
+		res_fft_buf[i+1] = hanning_win[i+1]*in_res[i+1];
+		echo_fft_buf[i] = hanning_win[i]*in_echo[i];
+		echo_fft_buf[i+1] = hanning_win[i+1]*in_echo[i+1];
+		far_fft_buf[i] = hanning_win[i]*in_far[i];
+		far_fft_buf[i+1] = hanning_win[i+1]*in_far[i+1];
+		/*if(res_fft_buf[i]!=0.0f || res_fft_buf[i+1]!=0.0f)
+		{
+			sum2 = 0.0f;
+		}*/
+	}
+	//process data
+	rdft(POST_FFT_LEN,&(fft_conf->nc),&(fft_conf->nw),1,res_fft_buf,fft_conf->ip,fft_conf->w);
+	rdft(POST_FFT_LEN,&(fft_conf->nc),&(fft_conf->nw),1,echo_fft_buf,fft_conf->ip,fft_conf->w);
+	rdft(POST_FFT_LEN,&(fft_conf->nc),&(fft_conf->nw),1,far_fft_buf,fft_conf->ip,fft_conf->w);
+	//concatenate data
+	//input  = (0.5*ln(a*conj(a)) - mean)/global_max_val,mean = 4.939886,global_max_val = 1/0.08945976
+	//		 = (0.5/global_max_val)*ln(a*conj(a)) - mean/global_max_val
+	//		 = a1**ln(a*conj(a)) + a2
+	a1 = 0.08945976f;
+	a2 = -(-4.939886)*0.08945976f;
+	//tmpno1 = logf(fabs(res_fft_buf[0])+1e-7f);
+	tmpno1 = _ln(fabs(res_fft_buf[0])+1e-7f,log_table,AEC_LN_PRECISION);
+	concat_buf[0] = tmpno1*a1 + a2;
+	for(p=2,q=1;p<TARGET_DIM*2;p+=2,q++)
+	{
+		tmpno1 = res_fft_buf[p]*res_fft_buf[p];
+		tmpno2 = res_fft_buf[p+1]*res_fft_buf[p+1] + tmpno1;
+		tmpno3 = _reciprocal_sqrt_hp(tmpno2+1e-8f);
+		//tmpno1 = logf(sqrt(tmpno2)+1e-7f);
+		tmpno1 = _ln(tmpno3*tmpno2+1e-7f,log_table,AEC_LN_PRECISION);
+		concat_buf[q] = tmpno1*a1 + a2;
+	}
+	tmpno1 = logf(fabs(echo_fft_buf[0])+1e-7f);
+	//tmpno1 = _ln(fabs(echo_fft_buf[0])+1e-7f,log_table,AEC_LN_PRECISION);
+	concat_buf[TARGET_DIM] = tmpno1*a1 + a2;
+	for(i=2,j=1;i<TARGET_DIM*2;i+=2,j++)
+	{
+		tmpno1 = echo_fft_buf[i]*echo_fft_buf[i];
+		tmpno2 = echo_fft_buf[i+1]*echo_fft_buf[i+1] + tmpno1;
+		tmpno3 = _reciprocal_sqrt_hp(tmpno2+1e-8f);
+		//tmpno1 = logf(sqrt(tmpno2)+1e-7f);
+		tmpno1 = _ln(tmpno3*tmpno2+1e-7f,log_table,AEC_LN_PRECISION);
+		concat_buf[TARGET_DIM+j] = tmpno1*a1 + a2;
+	}
+	//tmpno1 = logf(fabs(far_fft_buf[0])+1e-7f);
+	tmpno1 = _ln(fabs(far_fft_buf[0])+1e-7f,log_table,AEC_LN_PRECISION);
+	concat_buf[TARGET_DIM*2] = tmpno1*a1 + a2;
+	for(m=2,n=1;m<TARGET_DIM*2;m+=2,n++)
+	{
+		tmpno1 = far_fft_buf[m]*far_fft_buf[m];
+		tmpno2 = far_fft_buf[m+1]*far_fft_buf[m+1] + tmpno1;
+		tmpno3 = _reciprocal_sqrt_hp(tmpno2+1e-8f);
+		//tmpno1 = logf(sqrt(tmpno2)+1e-7f);
+		tmpno1 = _ln(tmpno3*tmpno2+1e-7f,log_table,AEC_LN_PRECISION);
+		concat_buf[2*TARGET_DIM+n] = tmpno1*a1 + a2;
+	}
+
+	AecPostProcess_DenseLayer_555X512_ActivationTanh(concat_buf,nn_layer_buf,exp_table,exp_precision);
+	AecPostProcess_DenseLayer_512X256_ActivationTanh(nn_layer_buf,concat_buf,exp_table,exp_precision);
+	AecPostProcess_DenseLayer_256X256_ActivationTanh(concat_buf,nn_layer_buf,exp_table,exp_precision);
+	AecPostProcess_DenseLayer_256X185_ActivationTanh(nn_layer_buf,concat_buf,exp_table,exp_precision);
+
+	enhanced[0] = res_fft_buf[0]*concat_buf[0];
+	enhanced[1] = 0.0f;
+	for(i=2,j=1;i<TARGET_DIM*2;i+=2,j++)
+	{
+		enhanced[i] = res_fft_buf[i]*concat_buf[j];
+		enhanced[i+1] = res_fft_buf[i+1]*concat_buf[j];
+	}
+
+	memset(&enhanced[TARGET_DIM*2],0,(POST_FFT_LEN-TARGET_DIM*2)*sizeof(float));
+	rdft(POST_FFT_LEN,&(fft_conf->nc),&(fft_conf->nw),-1,enhanced,fft_conf->ip,fft_conf->w);
+
+	return 0;
 }

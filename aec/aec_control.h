@@ -44,16 +44,28 @@ class AecControl {
     float *post_res_frame;
 #if AEC_POST_PROCESSING_ON
     FFT_Config *post_fft_conf;
+#if AEC_POST_PROCESSING_COH
+    float nonlinearity;
     float *coh_res;
     float *coh_echo;
     float *coh_rd;
     float *adpt_coh_echo;
     float *prev_enchanced_sqrd;
+#endif
+#if AEC_POST_PROCESSING_NN
+    float *ln_lookup;
+    int   *exp_lookup;
+    float *joint_buf;
+    float *nn_buf;
+#endif
     float *enhanced;
-    float nonlinearity;
     short first_frame;
-    float *post_echo_frame;
     float *vlp_buf;
+
+#endif
+    float *post_echo_frame;
+#if	AEC_SAVE_FAR
+    float *far_frame_save;
 #endif
 
     float *Rss;
