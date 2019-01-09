@@ -646,6 +646,7 @@ int AecControl::AudioProcessing_AEC_Process(
                         sizeof(float) * (POST_FFT_LEN >> 1));
                 data_len_record1 = POST_FFT_LEN >> 1;
                 data_len_record2 = POST_FFT_LEN >> 1;
+		data_len_record3 = POST_FFT_LEN >> 1;
                 for (q = 0; q < (POST_FFT_LEN >> 1); q += 2) {
                     tmpno1 = vlp_buf[q] + enhanced[q];
                     tmpno2 = vlp_buf[q + 1] + enhanced[q + 1];
