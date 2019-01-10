@@ -529,7 +529,8 @@ int AecResidualEchoNN(float *input_res, float *input_echo, float *input_aligned_
 {
 	short i,j,p,q,m,n,f1,f2,f3;
 	float *in_res = input_res, *in_echo = input_echo, *in_far = input_aligned_far;
-	float tmpno1,tmpno2,tmpno3,tmpno4,a1,a2,res_fft_buf[POST_FFT_LEN],echo_fft_buf[POST_FFT_LEN],far_fft_buf[POST_FFT_LEN];
+	float tmpno1,tmpno2,tmpno3,tmpno4,a1,a2,res_fft_buf[POST_FFT_LEN],echo_fft_buf[POST_FFT_LEN],far_fft_buf[POST_FFT_LEN],
+		nn_buf1[512],nn_buf2[256],nn_buf3[256];
 	
 	/*for(i=0;i<POST_FFT_LEN;i++)
 	{
@@ -573,7 +574,7 @@ int AecResidualEchoNN(float *input_res, float *input_echo, float *input_aligned_
 	{
 		tmpno1 = res_fft_buf[p]*res_fft_buf[p];
 		tmpno2 = res_fft_buf[p+1]*res_fft_buf[p+1] + tmpno1;
-		tmpno3 = _reciprocal_sqrt_hp(tmpno2+1e-8f);
+		tmpno3 = _reciprocal_sqrt(tmpno2+1e-8f);
 		//tmpno1 = logf(sqrt(tmpno2)+1e-7f);
 		tmpno1 = _ln(tmpno3*tmpno2+1e-7f,log_table,AEC_LN_PRECISION);
 		concat_buf[q] = tmpno1*a1 + a2;
@@ -585,7 +586,7 @@ int AecResidualEchoNN(float *input_res, float *input_echo, float *input_aligned_
 	{
 		tmpno1 = echo_fft_buf[i]*echo_fft_buf[i];
 		tmpno2 = echo_fft_buf[i+1]*echo_fft_buf[i+1] + tmpno1;
-		tmpno3 = _reciprocal_sqrt_hp(tmpno2+1e-8f);
+		tmpno3 = _reciprocal_sqrt(tmpno2+1e-8f);
 		//tmpno1 = logf(sqrt(tmpno2)+1e-7f);
 		tmpno1 = _ln(tmpno3*tmpno2+1e-7f,log_table,AEC_LN_PRECISION);
 		concat_buf[TARGET_DIM+j] = tmpno1*a1 + a2;
@@ -597,16 +598,21 @@ int AecResidualEchoNN(float *input_res, float *input_echo, float *input_aligned_
 	{
 		tmpno1 = far_fft_buf[m]*far_fft_buf[m];
 		tmpno2 = far_fft_buf[m+1]*far_fft_buf[m+1] + tmpno1;
-		tmpno3 = _reciprocal_sqrt_hp(tmpno2+1e-8f);
+		tmpno3 = _reciprocal_sqrt(tmpno2+1e-8f);
 		//tmpno1 = logf(sqrt(tmpno2)+1e-7f);
 		tmpno1 = _ln(tmpno3*tmpno2+1e-7f,log_table,AEC_LN_PRECISION);
 		concat_buf[2*TARGET_DIM+n] = tmpno1*a1 + a2;
 	}
 
-	AecPostProcess_DenseLayer_555X512_ActivationTanh(concat_buf,nn_layer_buf,exp_table,exp_precision);
+/*	AecPostProcess_DenseLayer_555X512_ActivationTanh(concat_buf,nn_layer_buf,exp_table,exp_precision);
 	AecPostProcess_DenseLayer_512X256_ActivationTanh(nn_layer_buf,concat_buf,exp_table,exp_precision);
 	AecPostProcess_DenseLayer_256X256_ActivationTanh(concat_buf,nn_layer_buf,exp_table,exp_precision);
-	AecPostProcess_DenseLayer_256X185_ActivationTanh(nn_layer_buf,concat_buf,exp_table,exp_precision);
+	AecPostProcess_DenseLayer_256X185_ActivationTanh(nn_layer_buf,concat_buf,exp_table,exp_precision);*/
+
+	AecPostProcess_DenseLayer_555X512_ActivationTanh(concat_buf,nn_buf1,exp_table,exp_precision);
+	AecPostProcess_DenseLayer_512X256_ActivationTanh(nn_buf1,nn_buf2,exp_table,exp_precision);
+	AecPostProcess_DenseLayer_256X256_ActivationTanh(nn_buf2,nn_buf3,exp_table,exp_precision);
+	AecPostProcess_DenseLayer_256X185_ActivationTanh(nn_buf3,concat_buf,exp_table,exp_precision);
 
 	enhanced[0] = res_fft_buf[0]*concat_buf[0];
 	enhanced[1] = 0.0f;

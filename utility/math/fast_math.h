@@ -118,7 +118,7 @@ static __inline float _ln(const float val, register float* const pTable, registe
 static __inline float _exp(const float val, unsigned int* pTable,const unsigned int  precision)
 {
 	// build float bits
-	const int i = (int) (val * (8388608.0f * 1.44269504088896f) + (127.0f * 8388608.0f) );
+	const int i = (int) (val * 12102203.16156145696768f + 1065353216.0f);
 
 	// replace mantissa with lookup
 	const int it = (i & 0xFF800000) | pTable[(i & 0x7FFFFF) >> (23 - precision)];
@@ -130,11 +130,12 @@ static __inline float _exp(const float val, unsigned int* pTable,const unsigned 
 
 static __inline float _tanh(const float val, unsigned int* pTable,const unsigned int  precision)
 {
-	float exp_val2_plus1,exp_val2_minus1,exp_val = _exp(2.0*val, pTable, precision);
-	//recp_exp = _reciprocal(exp_val+1.0f);
+	float exp_val2_plus1,exp_val2_minus1,recp_exp,exp_val = _exp(2.0*val, pTable, precision);
+	recp_exp = _reciprocal(exp_val+1.0f);
 	exp_val2_minus1 = exp_val - 1.0f;
-	exp_val2_plus1 = exp_val + 1.0f;
-	return exp_val2_minus1/exp_val2_plus1;
+	//exp_val2_plus1 = exp_val + 1.0f;
+	//return exp_val2_minus1/exp_val2_plus1;
+	return recp_exp*exp_val2_minus1;
 }
 
 
