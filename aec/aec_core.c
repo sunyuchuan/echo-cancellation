@@ -87,7 +87,7 @@ void SetNonlinearGain(float curr_level, float *gain, float min_level) {
 int AecDeecho(float *far_signal, float *near_signal, float *far_frame,
               float *near_frame, float *filter, float *echo, float *error,
               float *abs_near, float *Rss, float *Rdd, float *Ree) {
-    short i, j, k, subband_num;
+    short i, j, k;
     float tmpno1, tmpno2, tmpno3, tmpno4, tmpno5, tmpno6;
     float mu, fsum, k_l1, k_l2, k_l3, delta, kxr1, kxi1, kxr2, kxi2, kxr3, kxi3,
         cr, ci;
@@ -96,13 +96,8 @@ int AecDeecho(float *far_signal, float *near_signal, float *far_frame,
     error[1] = near_signal[1];
     echo[0] = 0.0f;
     echo[1] = 0.0f;
-#if AEC_POST_PROCESSING_NN
-	subband_num = 92;
-#else
-	subband_num = SUBBAND_NUM;
-#endif
 
-    for (i = 2, j = 6, k = 2; i < subband_num; i += 2, j += 6, k++) {
+    for (i = 2, j = 6, k = 2; i < SUBBAND_NUM; i += 2, j += 6, k++) {
         // update far frame
         far_frame[j] = far_frame[j + 2];
         far_frame[j + 1] = far_frame[j + 3];
@@ -210,10 +205,7 @@ int AecDeecho(float *far_signal, float *near_signal, float *far_frame,
         tmpno2 = tmpno5 + tmpno6;
         filter[j + 5] += tmpno2;
     }
-#if AEC_POST_PROCESSING_NN
-	memcpy(&error[subband_num],&near_signal[subband_num],sizeof(float)*(SUBBAND_NUM-subband_num));
-	memset(&echo[subband_num],0,sizeof(float)*(SUBBAND_NUM-subband_num));
-#endif
+    // memcpy(&error[278],&near_signal[278],sizeof(float)*(SUBBAND_NUM-278));
 
     return 0;
 }
