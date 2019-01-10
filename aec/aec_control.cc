@@ -549,8 +549,11 @@ int AecControl::AudioProcessing_AEC_Process(
                        SUBBAND_FRAME_SHIFT * sizeof(short));
                 farend_ptr = farend;
             }
-            for (k = 0; k < SUBBAND_FRAME_SHIFT; k++) {
+            for (k = 0; k < SUBBAND_FRAME_SHIFT; k+=4) {
                 far_input_buf[k] = ((float)farend_ptr[k]) * 3.05185094e-5f;
+                far_input_buf[k+1] = ((float)farend_ptr[k+1]) * 3.05185094e-5f;
+                far_input_buf[k+2] = ((float)farend_ptr[k+2]) * 3.05185094e-5f;
+                far_input_buf[k+3] = ((float)farend_ptr[k+3]) * 3.05185094e-5f;
                 // near_input_buf[k] = ((float)pri[k])*3.05185094e-5f;
             }
 
@@ -563,10 +566,13 @@ int AecControl::AudioProcessing_AEC_Process(
         }
 
         if (mic_switch == true) {
-            for (k = 0; k < SUBBAND_FRAME_SHIFT; k++) {
+        	short *ptr = &near[i * SUBBAND_FRAME_SHIFT];
+            for (k = 0; k < SUBBAND_FRAME_SHIFT; k+=4) {
                 // far_input_buf[k] = ((float)farend_ptr[k])*3.05185094e-5f;
-                near_input_buf[k] =
-                    ((float)near[i * SUBBAND_FRAME_SHIFT + k]) * 3.05185094e-5f;
+                near_input_buf[k] = ((float)ptr[k]) * 3.05185094e-5f;
+                near_input_buf[k+1] = ((float)ptr[k+1]) * 3.05185094e-5f;
+                near_input_buf[k+2] = ((float)ptr[k+2]) * 3.05185094e-5f;
+                near_input_buf[k+3] = ((float)ptr[k+3]) * 3.05185094e-5f;
             }
             DftFilterBankAnalysis(fb_ctrl_near, realFFT, near_input_buf,
                                   SUBBAND_FRAME_SHIFT);
@@ -616,16 +622,16 @@ int AecControl::AudioProcessing_AEC_Process(
             data_len_record1 += output_sample_num;
 #if AEC_POST_PROCESSING_ON
             if (playout_switch == true) {
-		memcpy(fb_ctrl_far->synthesis_fft_buf,far_spectrum,SUBBAND_NUM*sizeof(float));
+            	memcpy(fb_ctrl_far->synthesis_fft_buf,far_spectrum,SUBBAND_NUM*sizeof(float));
                 DftFilterBankSynthesis(fb_ctrl_far, realFFT, output2,
                                        &output_sample_num2);
                 memcpy(far_frame_save+data_len_record3,output2,output_sample_num2*sizeof(float));
-		data_len_record3 += output_sample_num2;
+				data_len_record3 += output_sample_num2;
 
-		DftFilterBankSynthesis(fb_ctrl_echo,realFFT,output1,&output_sample_num1);
-		*output_size1 += output_sample_num1<<1;
-		memcpy(post_echo_frame+data_len_record2,output1,output_sample_num1*sizeof(float));
-		data_len_record2 += output_sample_num1;
+				DftFilterBankSynthesis(fb_ctrl_echo,realFFT,output1,&output_sample_num1);
+				*output_size1 += output_sample_num1<<1;
+				memcpy(post_echo_frame+data_len_record2,output1,output_sample_num1*sizeof(float));
+				data_len_record2 += output_sample_num1;
             }
 
             if (data_len_record1 == POST_FFT_LEN && playout_switch == true) {
@@ -640,13 +646,20 @@ int AecControl::AudioProcessing_AEC_Process(
 				joint_buf, nn_buf, post_fft_conf, ln_lookup, 
 				exp_lookup,AEC_EXP_PRECISION, enhanced);
 #endif
-                memmove(post_res_frame, post_res_frame + (POST_FFT_LEN >> 1),
+/*                memmove(post_res_frame, post_res_frame + (POST_FFT_LEN >> 1),
                         sizeof(float) * (POST_FFT_LEN >> 1));
                 memmove(post_echo_frame, post_echo_frame + (POST_FFT_LEN >> 1),
-                        sizeof(float) * (POST_FFT_LEN >> 1));
+                        sizeof(float) * (POST_FFT_LEN >> 1))*/;
+                for(int m=0;m<(POST_FFT_LEN >> 1);m+=2)
+                {
+                	post_res_frame[m] = post_res_frame[m+(POST_FFT_LEN >> 1)];
+                	post_res_frame[m+1] = post_res_frame[m+1+(POST_FFT_LEN >> 1)];
+                	post_echo_frame[m] = post_echo_frame[m+(POST_FFT_LEN >> 1)];
+                	post_echo_frame[m+1] = post_echo_frame[m+1+(POST_FFT_LEN >> 1)];
+                }
                 data_len_record1 = POST_FFT_LEN >> 1;
                 data_len_record2 = POST_FFT_LEN >> 1;
-		data_len_record3 = POST_FFT_LEN >> 1;
+                data_len_record3 = POST_FFT_LEN >> 1;
                 for (q = 0; q < (POST_FFT_LEN >> 1); q += 2) {
                     tmpno1 = vlp_buf[q] + enhanced[q];
                     tmpno2 = vlp_buf[q + 1] + enhanced[q + 1];
@@ -691,9 +704,9 @@ int AecControl::AudioProcessing_AEC_ClearFarFrameBuf() {
 int AecControl::AudioProcessing_AEC_ResetNearState() {
     DftFilterBankReset(fb_ctrl_near);
 #if AEC_POST_PROCESSING_ON
-#if AEC_POST_PROCESSING_COH
     memset(post_echo_frame, 0, sizeof(float)*(POST_FFT_LEN));
     memset(post_res_frame, 0, sizeof(float)*(POST_FFT_LEN));
+#if AEC_POST_PROCESSING_COH
     memset(prev_enchanced_sqrd, 0, sizeof(float)*(POST_FFT_LEN/2+1));
 #endif
     memset(vlp_buf, 0, sizeof(float)*(POST_FFT_LEN/2));

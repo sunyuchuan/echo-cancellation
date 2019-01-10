@@ -416,14 +416,17 @@ static void AecPostProcess_DenseLayer_555X512_ActivationTanh(float *input,float 
 	for(i=0;i<512;i++)
 	{
 		w = &W_DenseLayer1[i][0];
-		for(j=0;j<555;j+=5)
+		for(j=0;j<552;j+=4)
 		{
 			sum1+=input[j]*w[j];
 			sum2+=input[j+1]*w[j+1];
 			sum3+=input[j+2]*w[j+2];
 			sum4+=input[j+3]*w[j+3];
-			sum5+=input[j+4]*w[j+4];
+			//sum5+=input[j+4]*w[j+4];
 		}
+		sum2+=input[552]*w[552];
+		sum3+=input[553]*w[553];
+		sum4+=input[554]*w[554];
 		sum1+=(sum2 + sum3 + sum4 + sum5 + W_DenseLayer1_Bias[i]);
 		output[i] = _tanh(sum1,exp_table,exp_precision);
 		//output[i] = tanh(sum1);
@@ -562,19 +565,19 @@ int AecResidualEchoNN(float *input_res, float *input_echo, float *input_aligned_
 	{
 		tmpno1 = res_fft_buf[p]*res_fft_buf[p];
 		tmpno2 = res_fft_buf[p+1]*res_fft_buf[p+1] + tmpno1;
-		tmpno3 = _reciprocal_sqrt_hp(tmpno2+1e-8f);
+		tmpno3 = _reciprocal_sqrt(tmpno2+1e-8f);
 		//tmpno1 = logf(sqrt(tmpno2)+1e-7f);
 		tmpno1 = _ln(tmpno3*tmpno2+1e-7f,log_table,AEC_LN_PRECISION);
 		concat_buf[q] = tmpno1*a1 + a2;
 	}
-	tmpno1 = logf(fabs(echo_fft_buf[0])+1e-7f);
-	//tmpno1 = _ln(fabs(echo_fft_buf[0])+1e-7f,log_table,AEC_LN_PRECISION);
+	//tmpno1 = logf(fabs(echo_fft_buf[0])+1e-7f);
+	tmpno1 = _ln(fabs(echo_fft_buf[0])+1e-7f,log_table,AEC_LN_PRECISION);
 	concat_buf[TARGET_DIM] = tmpno1*a1 + a2;
 	for(i=2,j=1;i<TARGET_DIM*2;i+=2,j++)
 	{
 		tmpno1 = echo_fft_buf[i]*echo_fft_buf[i];
 		tmpno2 = echo_fft_buf[i+1]*echo_fft_buf[i+1] + tmpno1;
-		tmpno3 = _reciprocal_sqrt_hp(tmpno2+1e-8f);
+		tmpno3 = _reciprocal_sqrt(tmpno2+1e-8f);
 		//tmpno1 = logf(sqrt(tmpno2)+1e-7f);
 		tmpno1 = _ln(tmpno3*tmpno2+1e-7f,log_table,AEC_LN_PRECISION);
 		concat_buf[TARGET_DIM+j] = tmpno1*a1 + a2;
@@ -586,7 +589,7 @@ int AecResidualEchoNN(float *input_res, float *input_echo, float *input_aligned_
 	{
 		tmpno1 = far_fft_buf[m]*far_fft_buf[m];
 		tmpno2 = far_fft_buf[m+1]*far_fft_buf[m+1] + tmpno1;
-		tmpno3 = _reciprocal_sqrt_hp(tmpno2+1e-8f);
+		tmpno3 = _reciprocal_sqrt(tmpno2+1e-8f);
 		//tmpno1 = logf(sqrt(tmpno2)+1e-7f);
 		tmpno1 = _ln(tmpno3*tmpno2+1e-7f,log_table,AEC_LN_PRECISION);
 		concat_buf[2*TARGET_DIM+n] = tmpno1*a1 + a2;
