@@ -522,42 +522,6 @@ static void AecPostProcess_DenseLayer_185X185_ActivationTanh(const float *input,
 
 }
 
-static void AecPostProcess_DenseLayer_185X185_ActivationTanh(const float *input,float *output, unsigned int *exp_table, int exp_precision)
-{
-	int i,j;
-	float sum1 = 0.0f,sum2 = 0.0f,sum3 = 0.0f,sum4 = 0.0f,sum5 = 0.0f;
-	const float *w1,*w2,*w3,*w4,*w5,*in1,*in2,*in3,*in4,*in5;
-
-	for(i=0;i<185;i+=1)
-	{
-		w1 = &W_DenseLayer4[i][0];
-		w2 = &W_DenseLayer4[i][37];
-		w3 = &W_DenseLayer4[i][74];
-		w4 = &W_DenseLayer4[i][111];
-		w5 = &W_DenseLayer4[i][148];
-		in1 = &input[0];
-		in2 = &input[37];
-		in3 = &input[74];
-		in4 = &input[111];
-		in5 = &input[148];
-		for(j=0;j<37;j+=1)
-		{
-			sum1+=*in1 * *w1++;
-			sum2+=*in2 * *w2++;
-			sum3+=*in3 * *w3++;
-			sum4+=*in4 * *w4++;
-			sum5+=*in5 * *w5++;
-		}
-		sum1+=(sum2 + sum3 + sum4 + sum5 + W_DenseLayer4_Bias[i]);
-		output[i] = _tanh(sum1,exp_table,exp_precision);
-		sum1 = 0.f;
-		sum2 = 0.f;
-		sum3 = 0.f;
-		sum4 = 0.f;
-		sum5 = 0.f;
-	}
-}
-
 int AecResidualEchoNN(float *input_res, float *input_echo, float *input_aligned_far,
 						float *concat_buf,float *nn_layer_buf, FFT_Config *fft_conf,
 						float *log_table,int *exp_table,int exp_precision, float *enhanced)
@@ -641,7 +605,7 @@ int AecResidualEchoNN(float *input_res, float *input_echo, float *input_aligned_
 	}
 
 	AecPostProcess_DenseLayer_555X512_ActivationTanh(_3dim_buf,max_nn_dim_buf,exp_table,exp_precision);
-	AecPostProcess_DenseLayer_512X185_ActivationTanh(max_nn_dim_buf_buf,_3dim_buf,exp_table,exp_precision);
+	AecPostProcess_DenseLayer_512X185_ActivationTanh(max_nn_dim_buf,_3dim_buf,exp_table,exp_precision);
 	AecPostProcess_DenseLayer_185X185_ActivationTanh(_3dim_buf,max_nn_dim_buf,exp_table,exp_precision);
 	AecPostProcess_DenseLayer_185X185_ActivationTanh(max_nn_dim_buf,_3dim_buf,exp_table,exp_precision);
 
