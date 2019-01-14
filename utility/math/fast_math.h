@@ -131,11 +131,11 @@ static __inline float _exp(const float val, unsigned int* pTable,const unsigned 
 static __inline float _tanh(const float val,register unsigned int* pTable,const unsigned int  precision)
 {
 	register const float exp_val = _exp(2.0*val, pTable, precision);
-	//recp_exp = _reciprocal(exp_val+1.0f);
+	register const float recp_exp = _reciprocal(exp_val+1.0f);
 	register const float exp_val2_minus1 = exp_val - 1.0f;
-	register const float exp_val2_plus1 = exp_val + 1.0f;
-	return exp_val2_minus1/exp_val2_plus1;
-	//return recp_exp*exp_val2_minus1;
+	//register const float exp_val2_plus1 = exp_val + 1.0f;
+	//return exp_val2_minus1/exp_val2_plus1;
+	return recp_exp*exp_val2_minus1;
 }
 
 
