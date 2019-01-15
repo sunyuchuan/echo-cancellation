@@ -422,6 +422,14 @@ static void AecPostProcess_DenseLayer_555X256_ActivationTanh(const float *input,
 	float sum1 = 0.0f,sum2 = 0.0f,sum3 = 0.0f,sum4 = 0.0f,sum5 = 0.0f,sum6 = 0.0f,sum7 = 0.0f,sum8 = 0.0f;
 	const float *w1,*w2,*w3,*w4,*w5,*w6,*w7,*w8,*in1,*in2,*in3,*in4,*in5,*in6,*in7,*in8;
 
+	in1 = &input[0];
+	in2 = &input[69];
+	in3 = &input[138];
+	in4 = &input[207];
+	in5 = &input[276];
+	in6 = &input[345];
+	in7 = &input[414];
+	in8 = &input[483];
 	for(i=0;i<256;i+=1)
 	{
 		w1 = &W_DenseLayer1[i][0];
@@ -432,24 +440,16 @@ static void AecPostProcess_DenseLayer_555X256_ActivationTanh(const float *input,
 		w6 = &W_DenseLayer1[i][345];
 		w7 = &W_DenseLayer1[i][414];
 		w8 = &W_DenseLayer1[i][483];
-		in1 = &input[0];
-		in2 = &input[69];
-		in3 = &input[138];
-		in4 = &input[207];
-		in5 = &input[276];
-		in6 = &input[345];
-		in7 = &input[414];
-		in8 = &input[483];
 		for(j=0;j<69;j+=1)
 		{
-			sum1+=*in1++ * *w1++;
-			sum2+=*in2++ * *w2++;
-			sum3+=*in3++ * *w3++;
-			sum4+=*in4++ * *w4++;
-			sum5+=*in5++ * *w5++;
-			sum6+=*in6++ * *w6++;
-			sum7+=*in7++ * *w7++;
-			sum8+=*in8++ * *w8++;
+			sum1+=in1[j] * w1[j];
+			sum2+=in2[j] * w2[j];
+			sum3+=in3[j] * w3[j];
+			sum4+=in4[j] * w4[j];
+			sum5+=in5[j] * w5[j];
+			sum6+=in6[j] * w6[j];
+			sum7+=in7[j] * w7[j];
+			sum8+=in8[j] * w8[j];
 		}
 		sum1+=input[552]*w1[552];
 		sum2+=input[553]*w1[553];
@@ -474,6 +474,14 @@ static void AecPostProcess_DenseLayer_256X160_ActivationTanh(const float *input,
 	float sum1 = 0.0f,sum2 = 0.0f,sum3 = 0.0f,sum4 = 0.0f,sum5 = 0.0f,sum6 = 0.0f,sum7 = 0.0f,sum8 = 0.0f;
 	const float *w1,*w2,*w3,*w4,*w5,*w6,*w7,*w8,*in1,*in2,*in3,*in4,*in5,*in6,*in7,*in8;
 
+	in1 = &input[0];
+	in2 = &input[32];
+	in3 = &input[64];
+	in4 = &input[96];
+	in5 = &input[128];
+	in6 = &input[160];
+	in7 = &input[192];
+	in8 = &input[224];
 	for(i=0;i<160;i+=1)
 	{
 		w1 = &W_DenseLayer2[i][0];
@@ -484,24 +492,16 @@ static void AecPostProcess_DenseLayer_256X160_ActivationTanh(const float *input,
 		w6 = &W_DenseLayer2[i][160];
 		w7 = &W_DenseLayer2[i][192];
 		w8 = &W_DenseLayer2[i][224];
-		in1 = &input[0];
-		in2 = &input[32];
-		in3 = &input[64];
-		in4 = &input[96];
-		in5 = &input[128];
-		in6 = &input[160];
-		in7 = &input[192];
-		in8 = &input[224];
 		for(j=0;j<32;j+=1)
 		{
-			sum1+=*in1++ * *w1++;
-			sum2+=*in2++ * *w2++;
-			sum3+=*in3++ * *w3++;
-			sum4+=*in4++ * *w4++;
-			sum5+=*in5++ * *w5++;
-			sum6+=*in6++ * *w6++;
-			sum7+=*in7++ * *w7++;
-			sum8+=*in8++ * *w8++;
+			sum1+=in1[j] * w1[j];
+			sum2+=in2[j] * w2[j];
+			sum3+=in3[j] * w3[j];
+			sum4+=in4[j] * w4[j];
+			sum5+=in5[j] * w5[j];
+			sum6+=in6[j] * w6[j];
+			sum7+=in7[j] * w7[j];
+			sum8+=in8[j] * w8[j];
 		}
 		sum5+=(sum1 + sum2 + sum3 + sum4 + sum6 + sum7 + sum8 + W_DenseLayer2_Bias[i]);
 		output[i] = _tanh(sum5,exp_table,AEC_EXP_PRECISION);
@@ -522,6 +522,14 @@ static void AecPostProcess_DenseLayer_160X192_ActivationTanh(const float *input,
 	float sum1 = 0.0f,sum2 = 0.0f,sum3 = 0.0f,sum4 = 0.0f,sum5 = 0.0f,sum6 = 0.0f,sum7 = 0.0f,sum8 = 0.0f;
 	const float *w1,*w2,*w3,*w4,*w5,*w6,*w7,*w8,*in1,*in2,*in3,*in4,*in5,*in6,*in7,*in8;
 
+	in1 = &input[0];
+	in2 = &input[20];
+	in3 = &input[40];
+	in4 = &input[60];
+	in5 = &input[80];
+	in6 = &input[100];
+	in7 = &input[120];
+	in8 = &input[140];
 	for(i=0;i<192;i+=1)
 	{
 		w1 = &W_DenseLayer3[i][0];
@@ -532,24 +540,16 @@ static void AecPostProcess_DenseLayer_160X192_ActivationTanh(const float *input,
 		w6 = &W_DenseLayer3[i][100];
 		w7 = &W_DenseLayer3[i][120];
 		w8 = &W_DenseLayer3[i][140];
-		in1 = &input[0];
-		in2 = &input[20];
-		in3 = &input[40];
-		in4 = &input[60];
-		in5 = &input[80];
-		in6 = &input[100];
-		in7 = &input[120];
-		in8 = &input[140];
 		for(j=0;j<20;j+=1)
 		{
-			sum1+=*in1++ * *w1++;
-			sum2+=*in2++ * *w2++;
-			sum3+=*in3++ * *w3++;
-			sum4+=*in4++ * *w4++;
-			sum5+=*in5++ * *w5++;
-			sum6+=*in6++ * *w6++;
-			sum7+=*in7++ * *w7++;
-			sum8+=*in8++ * *w8++;
+			sum1+=in1[j] * w1[j];
+			sum2+=in2[j] * w2[j];
+			sum3+=in3[j] * w3[j];
+			sum4+=in4[j] * w4[j];
+			sum5+=in5[j] * w5[j];
+			sum6+=in6[j] * w6[j];
+			sum7+=in7[j] * w7[j];
+			sum8+=in8[j] * w8[j];
 		}
 		sum5+=(sum1 + sum2 + sum3 + sum4 + sum6 + sum7 + sum8 + W_DenseLayer3_Bias[i]);
 		output[i] = _tanh(sum5,exp_table,AEC_EXP_PRECISION);
@@ -570,6 +570,14 @@ static void AecPostProcess_DenseLayer_192X185_ActivationTanh(const float *input,
 	float sum1 = 0.0f,sum2 = 0.0f,sum3 = 0.0f,sum4 = 0.0f,sum5 = 0.0f,sum6 = 0.0f,sum7 = 0.0f,sum8 = 0.0f;
 	const float *w1,*w2,*w3,*w4,*w5,*w6,*w7,*w8,*in1,*in2,*in3,*in4,*in5,*in6,*in7,*in8;
 
+	in1 = &input[0];
+	in2 = &input[24];
+	in3 = &input[48];
+	in4 = &input[72];
+	in5 = &input[96];
+	in6 = &input[120];
+	in7 = &input[144];
+	in8 = &input[168];
 	for(i=0;i<185;i+=1)
 	{
 		w1 = &W_DenseLayer4[i][0];
@@ -580,24 +588,16 @@ static void AecPostProcess_DenseLayer_192X185_ActivationTanh(const float *input,
 		w6 = &W_DenseLayer4[i][120];
 		w7 = &W_DenseLayer4[i][144];
 		w8 = &W_DenseLayer4[i][168];
-		in1 = &input[0];
-		in2 = &input[24];
-		in3 = &input[48];
-		in4 = &input[72];
-		in5 = &input[96];
-		in6 = &input[120];
-		in7 = &input[144];
-		in8 = &input[168];
 		for(j=0;j<24;j+=1)
 		{
-			sum1+=*in1++ * *w1++;
-			sum2+=*in2++ * *w2++;
-			sum3+=*in3++ * *w3++;
-			sum4+=*in4++ * *w4++;
-			sum5+=*in5++ * *w5++;
-			sum6+=*in6++ * *w6++;
-			sum7+=*in7++ * *w7++;
-			sum8+=*in8++ * *w8++;
+			sum1+=in1[j] * w1[j];
+			sum2+=in2[j] * w2[j];
+			sum3+=in3[j] * w3[j];
+			sum4+=in4[j] * w4[j];
+			sum5+=in5[j] * w5[j];
+			sum6+=in6[j] * w6[j];
+			sum7+=in7[j] * w7[j];
+			sum8+=in8[j] * w8[j];
 		}
 		sum5+=(sum1 + sum2 + sum3 + sum4 + sum6 + sum7 + sum8 + W_DenseLayer4_Bias[i]);
 		output[i] = _tanh(sum5,exp_table,AEC_EXP_PRECISION);
