@@ -2,8 +2,8 @@
 #define _AEC_POST_NET_H_
 
 extern const float W_DenseLayer1[256][555];
-extern const float W_DenseLayer2[160][256];
-extern const float W_DenseLayer3[192][160];
+extern const float W_DenseLayer2[192][256];
+extern const float W_DenseLayer3[192][192];
 extern const float W_DenseLayer4[185][192];
 extern const float W_DenseLayer1_Bias[256];
 extern const float W_DenseLayer2_Bias[160];

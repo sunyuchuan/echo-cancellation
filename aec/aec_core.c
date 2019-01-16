@@ -1,21 +1,23 @@
-#include "aec/aec_core.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "subband/analy_synth/filterbank_control.h"
 #include "aec/aec_defines.h"
-#include "aec/post_process/sqrt_hanning_win.h"
+#include "utility/fft/fft_config.h"
 #include "utility/fft/rdft_8g.h"
 #include "utility/math/fast_math.h"
+#include "aec/post_process/sqrt_hanning_win.h"
 #include "aec/post_process/aec_post_net.h"
 #include "aec/post_process/hanning_win.h"
 #include "aec/post_process/post_process_config.h"
+#include "aec/aec_core.h"
+
 
 #define ALPHA (-0.5f)
 #define BETA (0.01f)
 #define ALPHA_PLUS_1 (ALPHA + 1.0f)
-#define ITERM1 \
-    ((1.0f - ALPHA) / (2.0f * 2.0f))  //(1-alpha)/(2*Adp_filter_length)
+#define ITERM1 ((1.0f - ALPHA) / (2.0f * 2.0f))  //(1-alpha)/(2*Adp_filter_length)
 
 // post process
 #define LAMDA (0.6f)
@@ -23,8 +25,8 @@
 
 #define LOW_FREQUENCY_LEN 880
 
-void CalcAbsValue(FilterBankControl *fb_inst, float *inv_abs_val,
-                  float *abs_val) {
+void CalcAbsValue(FilterBankControl *fb_inst, float *inv_abs_val,float *abs_val)
+{
     short j, k;
     float *data1, tmp1, tmp2;
 
@@ -86,7 +88,7 @@ void SetNonlinearGain(float curr_level, float *gain, float min_level) {
 
 int AecDeecho(float *far_signal, float *near_signal, float *far_frame,
               float *near_frame, float *filter, float *echo, float *error,
-              float *abs_near, float *Rss, float *Rdd, float *Ree) {
+              float *abs_near, float *Rss, float *Rdd, float *Ree, float *prev_mu) {
     short i, j, k, subband_num;
     float tmpno1, tmpno2, tmpno3, tmpno4, tmpno5, tmpno6;
     float mu, fsum, k_l1, k_l2, k_l3, delta, kxr1, kxi1, kxr2, kxi2, kxr3, kxi3,
@@ -468,7 +470,7 @@ static void AecPostProcess_DenseLayer_555X256_ActivationTanh(const float *input,
 	}
 }
 
-static void AecPostProcess_DenseLayer_256X160_ActivationTanh(const float *input,float *output,unsigned int *exp_table, int exp_precision)
+static void AecPostProcess_DenseLayer_256X192_ActivationTanh(const float *input,float *output,unsigned int *exp_table, int exp_precision)
 {
 	int i,j;
 	float sum1 = 0.0f,sum2 = 0.0f,sum3 = 0.0f,sum4 = 0.0f,sum5 = 0.0f,sum6 = 0.0f,sum7 = 0.0f,sum8 = 0.0f;
@@ -482,7 +484,7 @@ static void AecPostProcess_DenseLayer_256X160_ActivationTanh(const float *input,
 	in6 = &input[160];
 	in7 = &input[192];
 	in8 = &input[224];
-	for(i=0;i<160;i+=1)
+	for(i=0;i<192;i+=1)
 	{
 		w1 = &W_DenseLayer2[i][0];
 		w2 = &W_DenseLayer2[i][32];
@@ -516,31 +518,31 @@ static void AecPostProcess_DenseLayer_256X160_ActivationTanh(const float *input,
 	}
 }
 
-static void AecPostProcess_DenseLayer_160X192_ActivationTanh(const float *input,float *output, unsigned int *exp_table, int exp_precision)
+static void AecPostProcess_DenseLayer_192X192_ActivationTanh(const float *input,float *output, unsigned int *exp_table, int exp_precision)
 {
 	int i,j;
 	float sum1 = 0.0f,sum2 = 0.0f,sum3 = 0.0f,sum4 = 0.0f,sum5 = 0.0f,sum6 = 0.0f,sum7 = 0.0f,sum8 = 0.0f;
 	const float *w1,*w2,*w3,*w4,*w5,*w6,*w7,*w8,*in1,*in2,*in3,*in4,*in5,*in6,*in7,*in8;
 
 	in1 = &input[0];
-	in2 = &input[20];
-	in3 = &input[40];
-	in4 = &input[60];
-	in5 = &input[80];
-	in6 = &input[100];
-	in7 = &input[120];
-	in8 = &input[140];
+	in2 = &input[24];
+	in3 = &input[48];
+	in4 = &input[72];
+	in5 = &input[96];
+	in6 = &input[120];
+	in7 = &input[144];
+	in8 = &input[168];
 	for(i=0;i<192;i+=1)
 	{
 		w1 = &W_DenseLayer3[i][0];
-		w2 = &W_DenseLayer3[i][20];
-		w3 = &W_DenseLayer3[i][40];
-		w4 = &W_DenseLayer3[i][60];
-		w5 = &W_DenseLayer3[i][80];
-		w6 = &W_DenseLayer3[i][100];
-		w7 = &W_DenseLayer3[i][120];
-		w8 = &W_DenseLayer3[i][140];
-		for(j=0;j<20;j+=1)
+		w2 = &W_DenseLayer3[i][24];
+		w3 = &W_DenseLayer3[i][48];
+		w4 = &W_DenseLayer3[i][72];
+		w5 = &W_DenseLayer3[i][96];
+		w6 = &W_DenseLayer3[i][120];
+		w7 = &W_DenseLayer3[i][144];
+		w8 = &W_DenseLayer3[i][168];
+		for(j=0;j<24;j+=1)
 		{
 			sum1+=in1[j] * w1[j];
 			sum2+=in2[j] * w2[j];
@@ -695,8 +697,8 @@ int AecResidualEchoNN(float *input_res, float *input_echo, float *input_aligned_
 	}
 
 	AecPostProcess_DenseLayer_555X256_ActivationTanh(_3dim_buf,max_nn_dim_buf,exp_table,exp_precision);
-	AecPostProcess_DenseLayer_256X160_ActivationTanh(max_nn_dim_buf,_3dim_buf,exp_table,exp_precision);
-	AecPostProcess_DenseLayer_160X192_ActivationTanh(_3dim_buf,max_nn_dim_buf,exp_table,exp_precision);
+	AecPostProcess_DenseLayer_256X192_ActivationTanh(max_nn_dim_buf,_3dim_buf,exp_table,exp_precision);
+	AecPostProcess_DenseLayer_192X192_ActivationTanh(_3dim_buf,max_nn_dim_buf,exp_table,exp_precision);
 	AecPostProcess_DenseLayer_192X185_ActivationTanh(max_nn_dim_buf,_3dim_buf,exp_table,exp_precision);
 
 	output_buf[0] = res_fft_buf[0]*_3dim_buf[0];
