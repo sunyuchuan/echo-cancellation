@@ -418,7 +418,7 @@ int AecResidualEchoCancellation(float *input_res, float *input_echo,
     return 0;
 }
 
-static void AecPostProcess_DenseLayer_555X256_ActivationTanh(const float *input,float *output, unsigned int *exp_table, int exp_precision)
+static void AecPostProcess_DenseLayer_555X256_ActivationTanh(const float input[555],const float output[256], unsigned int *exp_table, int exp_precision)
 {
 	int i,j;
 	float sum1 = 0.0f,sum2 = 0.0f,sum3 = 0.0f,sum4 = 0.0f,sum5 = 0.0f,sum6 = 0.0f,sum7 = 0.0f,sum8 = 0.0f;
@@ -470,7 +470,7 @@ static void AecPostProcess_DenseLayer_555X256_ActivationTanh(const float *input,
 	}
 }
 
-static void AecPostProcess_DenseLayer_256X192_ActivationTanh(const float *input,float *output,unsigned int *exp_table, int exp_precision)
+static void AecPostProcess_DenseLayer_256X192_ActivationTanh(const float input[256],const float output[192],unsigned int *exp_table, int exp_precision)
 {
 	int i,j;
 	float sum1 = 0.0f,sum2 = 0.0f,sum3 = 0.0f,sum4 = 0.0f,sum5 = 0.0f,sum6 = 0.0f,sum7 = 0.0f,sum8 = 0.0f;
@@ -518,7 +518,7 @@ static void AecPostProcess_DenseLayer_256X192_ActivationTanh(const float *input,
 	}
 }
 
-static void AecPostProcess_DenseLayer_192X192_ActivationTanh(const float *input,float *output, unsigned int *exp_table, int exp_precision)
+static void AecPostProcess_DenseLayer_192X192_ActivationTanh(const float input[192],const float output[192], unsigned int *exp_table, int exp_precision)
 {
 	int i,j;
 	float sum1 = 0.0f,sum2 = 0.0f,sum3 = 0.0f,sum4 = 0.0f,sum5 = 0.0f,sum6 = 0.0f,sum7 = 0.0f,sum8 = 0.0f;
@@ -566,7 +566,7 @@ static void AecPostProcess_DenseLayer_192X192_ActivationTanh(const float *input,
 	}
 }
 
-static void AecPostProcess_DenseLayer_192X185_ActivationTanh(const float *input,float *output, unsigned int *exp_table, int exp_precision)
+static void AecPostProcess_DenseLayer_192X185_ActivationTanh(const float input[192],const float output[185], unsigned int *exp_table, int exp_precision)
 {
 	int i,j;
 	float sum1 = 0.0f,sum2 = 0.0f,sum3 = 0.0f,sum4 = 0.0f,sum5 = 0.0f,sum6 = 0.0f,sum7 = 0.0f,sum8 = 0.0f;
