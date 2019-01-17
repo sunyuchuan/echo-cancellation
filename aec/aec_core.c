@@ -88,7 +88,7 @@ void SetNonlinearGain(float curr_level, float *gain, float min_level) {
 
 int AecDeecho(float *far_signal, float *near_signal, float *far_frame,
               float *near_frame, float *filter, float *echo, float *error,
-              float *abs_near, float *Rss, float *Rdd, float *Ree, float *prev_mu) {
+              float *abs_near, float *Rss, float *Rdd, float *Ree) {
     short i, j, k, subband_num;
     float tmpno1, tmpno2, tmpno3, tmpno4, tmpno5, tmpno6;
     float mu, fsum, k_l1, k_l2, k_l3, delta, kxr1, kxi1, kxr2, kxi2, kxr3, kxi3,
@@ -418,7 +418,7 @@ int AecResidualEchoCancellation(float *input_res, float *input_echo,
     return 0;
 }
 
-static void AecPostProcess_DenseLayer_555X256_ActivationTanh(const float input[555],const float output[256], unsigned int *exp_table, int exp_precision)
+static void AecPostProcess_DenseLayer_555X256_ActivationTanh(const float input[555], float output[256], unsigned int *exp_table, int exp_precision)
 {
 	int i,j;
 	float sum1 = 0.0f,sum2 = 0.0f,sum3 = 0.0f,sum4 = 0.0f,sum5 = 0.0f,sum6 = 0.0f,sum7 = 0.0f,sum8 = 0.0f;
@@ -470,7 +470,7 @@ static void AecPostProcess_DenseLayer_555X256_ActivationTanh(const float input[5
 	}
 }
 
-static void AecPostProcess_DenseLayer_256X192_ActivationTanh(const float input[256],const float output[192],unsigned int *exp_table, int exp_precision)
+static void AecPostProcess_DenseLayer_256X192_ActivationTanh(const float input[256], float output[192],unsigned int *exp_table, int exp_precision)
 {
 	int i,j;
 	float sum1 = 0.0f,sum2 = 0.0f,sum3 = 0.0f,sum4 = 0.0f,sum5 = 0.0f,sum6 = 0.0f,sum7 = 0.0f,sum8 = 0.0f;
@@ -518,7 +518,7 @@ static void AecPostProcess_DenseLayer_256X192_ActivationTanh(const float input[2
 	}
 }
 
-static void AecPostProcess_DenseLayer_192X192_ActivationTanh(const float input[192],const float output[192], unsigned int *exp_table, int exp_precision)
+static void AecPostProcess_DenseLayer_192X192_ActivationTanh(const float input[192], float output[192], unsigned int *exp_table, int exp_precision)
 {
 	int i,j;
 	float sum1 = 0.0f,sum2 = 0.0f,sum3 = 0.0f,sum4 = 0.0f,sum5 = 0.0f,sum6 = 0.0f,sum7 = 0.0f,sum8 = 0.0f;
@@ -566,7 +566,7 @@ static void AecPostProcess_DenseLayer_192X192_ActivationTanh(const float input[1
 	}
 }
 
-static void AecPostProcess_DenseLayer_192X185_ActivationTanh(const float input[192],const float output[185], unsigned int *exp_table, int exp_precision)
+static void AecPostProcess_DenseLayer_192X185_ActivationTanh(const float input[192], float output[185], unsigned int *exp_table, int exp_precision)
 {
 	int i,j;
 	float sum1 = 0.0f,sum2 = 0.0f,sum3 = 0.0f,sum4 = 0.0f,sum5 = 0.0f,sum6 = 0.0f,sum7 = 0.0f,sum8 = 0.0f;
