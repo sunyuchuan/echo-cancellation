@@ -351,44 +351,6 @@ int AecControl::AudioProcessing_AEC_FillFarBuf(char *ref, short sample_size,
         RingBuffer_WriteBuffer(far_end_buf, ref, (size_t)(sample_size >> 1));
     }
 
-    if (playout_switch == true && mic_switch == false) {
-        short farend[FRAME_LEN], i, k;
-        const short *farend_ptr = NULL;
-        float freq_dmn_far_inv_abs[SUBBAND_NUM / 2 + 1],
-            freq_dmn_far_abs[SUBBAND_NUM / 2 + 1];
-        short num_of_filled_buffers =
-            (short)RingBuffer_available_read(far_end_buf) / SUBBAND_FRAME_SHIFT;
-
-        if (num_of_filled_buffers >= 16) {
-            for (i = 0; i < 16; i++) {
-                RingBuffer_ReadBuffer(far_end_buf, (void **)&farend_ptr, farend,
-                                      SUBBAND_FRAME_SHIFT);
-                memcpy(last_far_end_frame, farend_ptr,
-                       SUBBAND_FRAME_SHIFT * sizeof(short));
-
-                for (k = 0; k < SUBBAND_FRAME_SHIFT; k++) {
-                    far_input_buf[k] = ((float)farend_ptr[k]) * 3.05185094e-5f;
-                    // near_input_buf[k] = ((float)pri[k])*3.05185094e-5f;
-                }
-
-                DftFilterBankAnalysis(fb_ctrl_far, realFFT, far_input_buf,
-                                      SUBBAND_FRAME_SHIFT);
-                CalcAbsValue(fb_ctrl_far, freq_dmn_far_inv_abs,
-                             freq_dmn_far_abs);
-                UpdateFarHistory(&far_history_pos, far_history,
-                                 freq_dmn_far_abs, far_sepctrum_history,
-                                 fb_ctrl_far->analysis_fft_buf);
-                if (DelayEstimator_AddFarSpectrumFloat(
-                        delay_estimator_farend, freq_dmn_far_abs, PART_LEN1,
-                        band_first, band_last) < 0) {
-                    return -1;
-                }
-            }
-        }
-    }
-    // LOGI("far_end_buf->read_pos = %lu, far_end_buf->write_pos = %lu.\n",
-    //      far_end_buf->read_pos, far_end_buf->write_pos);
-
     return 0;
 }
 
