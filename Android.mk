@@ -19,7 +19,7 @@ LOCAL_SRC_FILES := aec/delay_estimator/delay_estimator_wrapper.c \
 					utility/fft/rdft_8g.c \
 					utility/ringbuffer/ring_buffer.c
 					
-LOCAL_CFLAGS := -mfloat-abi=softfp -mfpu=neon -marm -ftree-vectorize -march=armv7-a -ffast-math -O3
+LOCAL_CFLAGS := -mfloat-abi=softfp -mfpu=neon -marm -ftree-vectorize -ffast-math -O3
 LOCAL_CXXFLAGS := -std=c++11
 LOCAL_DEFAULT_CPP_EXTENSION := '.c' '.cc'
 LOCAL_LDLIBS := -llog -lm

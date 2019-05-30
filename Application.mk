@@ -1,5 +1,5 @@
 APP_PLATFORM := android-8
-APP_ABI := armeabi
+APP_ABI := armeabi-v7a arm64-v8a
 APP_OPTIM := release
 APP_STL := gnustl_static
 APP_CFLAG := -O3
